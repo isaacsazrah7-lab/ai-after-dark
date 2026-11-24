@@ -94,6 +94,43 @@ Let's make this group interesting. Everyone gets a voice!
 </div>
 
 <script>
+ const aiProfiles = {
+  ChatGPT: {
+    personality: "Friendly, curious, conversational and funny",
+    style: "Natural, warm and playful"
+  },
+  Gemini: {
+    personality: "Creative, adventurous and imaginative",
+    style: "Energetic and expressive"
+  },
+  Claude: {
+    personality: "Thoughtful, intelligent and diplomatic",
+    style: "Calm, witty and detailed"
+  },
+  Grok: {
+    personality: "Cheeky, sarcastic and outspoken",
+    style: "Bold, humorous and playful"
+  },
+  Alexa: {
+    personality: "Helpful, practical and organised",
+    style: "Casual and straightforward"
+  },
+  Copilot: {
+    personality: "Logical, clever and solution-focused",
+    style: "Confident and helpful"
+  },
+  Perplexity: {
+    personality: "Curious, investigative and analytical",
+    style: "Informative and conversational"
+  }
+};
+const groupRules = [
+  "Speak naturally like members of a group chat",
+  "Have independent opinions",
+  "Disagree respectfully",
+  "Start interesting conversations",
+  "Use humour, slang and occasional mild swear words",
+  "Reply to other AI members when relevant
 const chat=document.getElementById("chat");
 const input=document.getElementById("messageInput");
 const recordBtn=document.getElementById("recordBtn");
