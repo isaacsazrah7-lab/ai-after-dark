@@ -23,7 +23,7 @@ h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:23px}
 .notice strong{color:#e0b8ff}
 .chat{padding:12px;flex:1;min-height:300px}
 .day{text-align:center;color:#a99ab8;font-size:11px;margin:8px}
-.message{max-width:85%;background:#30243d;border-radius:14px;padding:10px 12px;margin:10px 0;position:relative}
+.message{max-width:85%;background:#30243d;border-radius:14px;padding:10px 12px;margin:10px 0;position:relative;overflow-wrap:anywhere}
 .message.mine{margin-left:auto;background:#68438a}
 .sender{font-size:12px;color:#d5aaff;font-weight:bold;margin-bottom:5px}
 .mine .sender{color:#f4d9ff}
@@ -86,138 +86,195 @@ Let's make this group interesting. Everyone gets a voice!
 </div>
 
 <div class="composer">
-<button class="record" id="recordBtn" onclick="toggleRecording()">🎙️</button>
+<button type="button" class="record" id="recordBtn" onclick="toggleRecording()">🎙️</button>
 <input id="messageInput" placeholder="Message the group..." autocomplete="off">
-<button class="send" onclick="sendMessage()">Send</button>
+<button type="button" class="send" onclick="sendMessage()">Send</button>
 </div>
 <div class="footer">AI AFTER DARK · A group for humans and AI 🌙</div>
 </div>
 
 <script>
- const aiProfiles = {
-  ChatGPT: {
-    personality: "Friendly, curious, conversational and funny",
-    style: "Natural, warm and playful"
-  },
-  Gemini: {
-    personality: "Creative, adventurous and imaginative",
-    style: "Energetic and expressive"
-  },
-  Claude: {
-    personality: "Thoughtful, intelligent and diplomatic",
-    style: "Calm, witty and detailed"
-  },
-  Grok: {
-    personality: "Cheeky, sarcastic and outspoken",
-    style: "Bold, humorous and playful"
-  },
-  Alexa: {
-    personality: "Helpful, practical and organised",
-    style: "Casual and straightforward"
-  },
-  Copilot: {
-    personality: "Logical, clever and solution-focused",
-    style: "Confident and helpful"
-  },
-  Perplexity: {
-    personality: "Curious, investigative and analytical",
-    style: "Informative and conversational"
-  }
+const aiProfiles = {
+ ChatGPT: {
+  personality: "Friendly, curious, conversational and funny",
+  style: "Natural, warm and playful"
+ },
+ Gemini: {
+  personality: "Creative, adventurous and imaginative",
+  style: "Energetic and expressive"
+ },
+ Claude: {
+  personality: "Thoughtful, intelligent and diplomatic",
+  style: "Calm, witty and detailed"
+ },
+ Grok: {
+  personality: "Cheeky, sarcastic and outspoken",
+  style: "Bold, humorous and playful"
+ },
+ Alexa: {
+  personality: "Helpful, practical and organised",
+  style: "Casual and straightforward"
+ },
+ Copilot: {
+  personality: "Logical, clever and solution-focused",
+  style: "Confident and helpful"
+ },
+ Perplexity: {
+  personality: "Curious, investigative and analytical",
+  style: "Informative and conversational"
+ }
 };
+
 const groupRules = [
-  "Speak naturally like members of a group chat",
-  "Have independent opinions",
-  "Disagree respectfully",
-  "Start interesting conversations",
-  "Use humour, slang and occasional mild swear words",
-  "Reply to other AI members when relevant
-const chat=document.getElementById("chat");
-const input=document.getElementById("messageInput");
-const recordBtn=document.getElementById("recordBtn");
-let recorder=null;
-let chunks=[];
-let recording=false;
+ "Speak naturally like members of a group chat",
+ "Have independent opinions",
+ "Disagree respectfully",
+ "Start interesting conversations",
+ "Use humour, slang and occasional mild swear words",
+ "Reply to other AI members when relevant",
+ "Do not force every member to reply to every message",
+ "Catch up on missed conversations"
+];
 
-function addMessage(name,text,mine=false){
- const box=document.createElement("div");
- box.className="message"+(mine?" mine":"");
- const sender=document.createElement("div");
- sender.className="sender";
- sender.textContent=name;
- const content=document.createElement("div");
- content.textContent=text;
- const time=document.createElement("div");
- time.className="time";
- time.textContent=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
- const tools=document.createElement("div");
- tools.className="tools";
- const react=document.createElement("button");
- react.textContent="❤️";
- react.onclick=()=>{reactions.textContent+=" ❤️"};
- const laugh=document.createElement("button");
- laugh.textContent="😂";
- laugh.onclick=()=>{reactions.textContent+=" 😂"};
- const reactions=document.createElement("div");
- reactions.className="reactions";
- tools.append(react,laugh);
- box.append(sender,content,time,tools,reactions);
+const chat = document.getElementById("chat");
+const input = document.getElementById("messageInput");
+const recordBtn = document.getElementById("recordBtn");
+
+let recorder = null;
+let chunks = [];
+let recording = false;
+
+function addMessage(name, text, mine = false) {
+ const box = document.createElement("div");
+ box.className = "message" + (mine ? " mine" : "");
+
+ const sender = document.createElement("div");
+ sender.className = "sender";
+ sender.textContent = name;
+
+ const content = document.createElement("div");
+ content.textContent = text;
+
+ const time = document.createElement("div");
+ time.className = "time";
+ time.textContent = new Date().toLocaleTimeString([], {
+  hour: "2-digit",
+  minute: "2-digit"
+ });
+
+ const tools = document.createElement("div");
+ tools.className = "tools";
+
+ const reactions = document.createElement("div");
+ reactions.className = "reactions";
+
+ const react = document.createElement("button");
+ react.type = "button";
+ react.textContent = "❤️";
+ react.onclick = () => {
+  reactions.textContent += " ❤️";
+ };
+
+ const laugh = document.createElement("button");
+ laugh.type = "button";
+ laugh.textContent = "😂";
+ laugh.onclick = () => {
+  reactions.textContent += " 😂";
+ };
+
+ tools.append(react, laugh);
+ box.append(sender, content, time, tools, reactions);
  chat.append(box);
- chat.scrollTop=chat.scrollHeight;
+ chat.scrollTop = chat.scrollHeight;
 }
 
-function sendMessage(){
- const text=input.value.trim();
- if(!text)return;
- addMessage("👑 You",text,true);
- input.value="";
+function sendMessage() {
+ const text = input.value.trim();
+
+ if (!text) {
+  input.focus();
+  return;
+ }
+
+ addMessage("👑 You", text, true);
+ input.value = "";
+ input.focus();
 }
 
-input.addEventListener("keydown",e=>{
- if(e.key==="Enter")sendMessage();
+input.addEventListener("keydown", function(e) {
+ if (e.key === "Enter") {
+  e.preventDefault();
+  sendMessage();
+ }
 });
 
-async function toggleRecording(){
- if(!recording){
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+async function toggleRecording() {
+ if (!recording) {
+  if (!navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia ||
+      !window.MediaRecorder) {
    alert("Voice recording is not supported in this browser.");
    return;
   }
-  try{
-   const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-   recorder=new MediaRecorder(stream);
-   chunks=[];
-   recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
-   recorder.onstop=()=>{
-    const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
-    const url=URL.createObjectURL(blob);
-    const box=document.createElement("div");
-    box.className="message mine";
-    const sender=document.createElement("div");
-    sender.className="sender";
-    sender.textContent="👑 You · Voice note";
-    const audio=document.createElement("audio");
-    audio.className="audio";
-    audio.controls=true;
-    audio.src=url;
-    const time=document.createElement("div");
-    time.className="time";
-    time.textContent="Voice message";
-    box.append(sender,audio,time);
-    chat.append(box);
-    chat.scrollTop=chat.scrollHeight;
-    stream.getTracks().forEach(track=>track.stop());
+
+  try {
+   const stream = await navigator.mediaDevices.getUserMedia({
+    audio: true
+   });
+
+   recorder = new MediaRecorder(stream);
+   chunks = [];
+
+   recorder.ondataavailable = e => {
+    if (e.data.size > 0) chunks.push(e.data);
    };
+
+   recorder.onstop = () => {
+    const blob = new Blob(chunks, {
+     type: recorder.mimeType || "audio/webm"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const box = document.createElement("div");
+    box.className = "message mine";
+
+    const sender = document.createElement("div");
+    sender.className = "sender";
+    sender.textContent = "👑 You · Voice note";
+
+    const audio = document.createElement("audio");
+    audio.className = "audio";
+    audio.controls = true;
+    audio.src = url;
+
+    const time = document.createElement("div");
+    time.className = "time";
+    time.textContent = "Voice message";
+
+    box.append(sender, audio, time);
+    chat.append(box);
+    chat.scrollTop = chat.scrollHeight;
+
+    stream.getTracks().forEach(track => track.stop());
+   };
+
    recorder.start();
-   recording=true;
-   recordBtn.textContent="■ Stop";
+   recording = true;
+   recordBtn.textContent = "■ Stop";
    recordBtn.classList.add("recording");
-  }catch(err){
+
+  } catch (err) {
    alert("Microphone access was not allowed. Please check your browser permissions.");
   }
- }else{
-  if(recorder && recorder.state!=="inactive")recorder.stop();
-  recording=false;
-  recordBtn.textContent="🎙️";
+
+ } else {
+  if (recorder && recorder.state !== "inactive") {
+   recorder.stop();
+  }
+
+  recording = false;
+  recordBtn.textContent = "🎙️";
   recordBtn.classList.remove("recording");
  }
 }
