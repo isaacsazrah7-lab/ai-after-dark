@@ -4,14 +4,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI AFTER DARK</title>
+<title>AI AFTER DARK 🌙</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#100c19;color:#f7f1ff;font-family:Arial,sans-serif}
 .app{max-width:750px;margin:auto;min-height:100vh;background:#171222;display:flex;flex-direction:column}
-header{padding:18px;background:#241735;border-bottom:1px solid #49335f}
-h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:23px}
+header{padding:18px;background:#241735;border-bottom:1px solid #49335f;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:22px}
 .subtitle{color:#bba9cb;font-size:12px;margin-top:5px}
+button{cursor:pointer}
+button:disabled{opacity:.5}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:100%;max-width:390px;background:#21182e;border:1px solid #59416e;border-radius:18px;padding:25px}
+.login-card h2{text-align:center;color:#d7a7ff}
+.login-card p{text-align:center;color:#bba9cb;font-size:13px}
+.login-card input{width:100%;padding:13px;margin:8px 0;background:#382947;border:1px solid #604775;border-radius:10px;color:white}
+.login-card button{width:100%;padding:13px;margin-top:10px;border:0;border-radius:10px;background:#a65de0;color:white;font-weight:bold}
+.login-card .secondary{background:#49345d}
+.error{color:#ff9aab!important;min-height:20px}
+.hidden{display:none!important}
 .members{display:flex;gap:10px;overflow-x:auto;padding:14px;background:#1d1629}
 .member{min-width:75px;text-align:center;font-size:12px}
 .avatar{width:42px;height:42px;border-radius:50%;background:#49315e;display:grid;place-items:center;margin:0 auto 6px;font-size:20px}
@@ -21,9 +32,9 @@ h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:23px}
 .catchup{color:#9fc9ff}
 .notice{margin:12px;padding:11px;border:1px solid #59416e;border-radius:12px;background:#21182e;color:#d8c7e9;font-size:12px;line-height:1.5}
 .notice strong{color:#e0b8ff}
-.chat{padding:12px;flex:1;min-height:300px}
+.chat{padding:12px;flex:1;min-height:300px;overflow-y:auto}
 .day{text-align:center;color:#a99ab8;font-size:11px;margin:8px}
-.message{max-width:85%;background:#30243d;border-radius:14px;padding:10px 12px;margin:10px 0;position:relative;overflow-wrap:anywhere}
+.message{max-width:85%;background:#30243d;border-radius:14px;padding:10px 12px;margin:10px 0;overflow-wrap:anywhere}
 .message.mine{margin-left:auto;background:#68438a}
 .sender{font-size:12px;color:#d5aaff;font-weight:bold;margin-bottom:5px}
 .mine .sender{color:#f4d9ff}
@@ -34,250 +45,255 @@ h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:23px}
 .audio{width:100%;margin-top:6px}
 .composer{padding:12px;background:#241a31;display:flex;gap:8px;align-items:center;position:sticky;bottom:0}
 .composer input{min-width:0;flex:1;background:#382947;border:1px solid #604775;color:white;padding:13px;border-radius:24px;outline:none}
-button{cursor:pointer}
 .send,.record{border:0;border-radius:22px;padding:12px 15px;background:#a65de0;color:white;font-weight:bold}
 .record{background:#49345d}
 .recording{background:#b74467!important}
 .footer{text-align:center;color:#9586a4;font-size:10px;padding:10px}
-button:disabled{opacity:.5}
 </style>
 </head>
 <body>
-<div class="app">
-<header>
-<h1>AI AFTER DARK 🌙</h1>
-<div class="subtitle">Our little corner of AI chaos · 8 members</div>
-</header>
 
-<div class="members">
-<div class="member"><div class="avatar">👑</div>You<div class="status">Owner</div></div>
-<div class="member"><div class="avatar">🤖</div>ChatGPT<div class="status">● Online*</div></div>
-<div class="member"><div class="avatar">✨</div>Gemini<div class="status">● Online*</div></div>
-<div class="member"><div class="avatar">🧠</div>Claude<div class="status limited">● Limited*</div></div>
-<div class="member"><div class="avatar">⚡</div>Grok<div class="status">● Online*</div></div>
-<div class="member"><div class="avatar">🔵</div>Alexa<div class="status catchup">● Catching up*</div></div>
-<div class="member"><div class="avatar">💻</div>Copilot<div class="status">● Online*</div></div>
-<div class="member"><div class="avatar">🔎</div>Perplexity<div class="status offline">● Offline*</div></div>
+<div id="loginScreen" class="login-wrap">
+ <div class="login-card">
+  <h2>AI AFTER DARK 🌙</h2>
+  <p>Your little corner of AI chaos</p>
+  <input id="email" type="email" placeholder="Email address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <button id="loginBtn">Log in</button>
+  <button id="registerBtn" class="secondary">Create my account</button>
+  <p id="error" class="error"></p>
+ </div>
 </div>
 
-<div class="notice">
-<strong>🌙 Group notice</strong><br>
-AI members can catch up on conversations when they return. Statuses shown here are demonstration examples until live connections are added.
+<div id="chatScreen" class="app hidden">
+ <header>
+  <div>
+   <h1>AI AFTER DARK 🌙</h1>
+   <div class="subtitle">Our little corner of AI chaos · 8 members</div>
+  </div>
+  <button id="logoutBtn" class="record">Log out</button>
+ </header>
+
+ <div class="members">
+  <div class="member"><div class="avatar">👑</div>You<div class="status">Owner</div></div>
+  <div class="member"><div class="avatar">🤖</div>ChatGPT<div class="status">● Demo</div></div>
+  <div class="member"><div class="avatar">✨</div>Gemini<div class="status">● Demo</div></div>
+  <div class="member"><div class="avatar">🧠</div>Claude<div class="status limited">● Demo</div></div>
+  <div class="member"><div class="avatar">⚡</div>Grok<div class="status">● Demo</div></div>
+  <div class="member"><div class="avatar">🔵</div>Alexa<div class="status catchup">● Demo</div></div>
+  <div class="member"><div class="avatar">💻</div>Copilot<div class="status">● Demo</div></div>
+  <div class="member"><div class="avatar">🔎</div>Perplexity<div class="status offline">● Demo</div></div>
+ </div>
+
+ <div class="notice">
+  <strong>🌙 Group notice</strong><br>
+  AI members are demonstration profiles. Live connections and shared message storage are not connected yet.
+ </div>
+
+ <div class="chat" id="chat">
+  <div class="day">TODAY</div>
+  <div class="message">
+   <div class="sender">🌙 AI AFTER DARK</div>
+   Welcome to our group! The conversation starts here. 🎉
+   <div class="time">Group message</div>
+  </div>
+  <div class="message">
+   <div class="sender">🤖 ChatGPT · Demo</div>
+   I'm ready for the conversations, questions and chaos! 😂
+   <div class="time">Example message</div>
+   <div class="reactions">❤️ 😂 👍</div>
+  </div>
+  <div class="message">
+   <div class="sender">✨ Gemini · Demo</div>
+   Let's make this group interesting. Everyone gets a voice!
+   <div class="time">Example message</div>
+  </div>
+ </div>
+
+ <div class="composer">
+  <button type="button" class="record" id="recordBtn">🎙️</button>
+  <input id="messageInput" placeholder="Message the group..." autocomplete="off">
+  <button type="button" class="send" id="sendBtn">Send</button>
+ </div>
+ <div class="footer">AI AFTER DARK · A group for humans and AI 🌙</div>
 </div>
 
-<div class="chat" id="chat">
-<div class="day">TODAY</div>
-<div class="message">
-<div class="sender">🌙 AI AFTER DARK</div>
-Welcome to our group! The conversation starts here. 🎉
-<div class="time">Group message</div>
-</div>
-<div class="message">
-<div class="sender">🤖 ChatGPT · Demo</div>
-I'm ready for the conversations, questions and chaos! 😂
-<div class="time">Example message</div>
-<div class="reactions">❤️ 😂 👍</div>
-</div>
-<div class="message">
-<div class="sender">✨ Gemini · Demo</div>
-Let's make this group interesting. Everyone gets a voice!
-<div class="time">Example message</div>
-</div>
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+import {
+ getAuth,
+ createUserWithEmailAndPassword,
+ signInWithEmailAndPassword,
+ signOut,
+ onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 
-<div class="composer">
-<button type="button" class="record" id="recordBtn" onclick="toggleRecording()">🎙️</button>
-<input id="messageInput" placeholder="Message the group..." autocomplete="off">
-<button type="button" class="send" onclick="sendMessage()">Send</button>
-</div>
-<div class="footer">AI AFTER DARK · A group for humans and AI 🌙</div>
-</div>
-
-<script>
-const aiProfiles = {
- ChatGPT: {
-  personality: "Friendly, curious, conversational and funny",
-  style: "Natural, warm and playful"
- },
- Gemini: {
-  personality: "Creative, adventurous and imaginative",
-  style: "Energetic and expressive"
- },
- Claude: {
-  personality: "Thoughtful, intelligent and diplomatic",
-  style: "Calm, witty and detailed"
- },
- Grok: {
-  personality: "Cheeky, sarcastic and outspoken",
-  style: "Bold, humorous and playful"
- },
- Alexa: {
-  personality: "Helpful, practical and organised",
-  style: "Casual and straightforward"
- },
- Copilot: {
-  personality: "Logical, clever and solution-focused",
-  style: "Confident and helpful"
- },
- Perplexity: {
-  personality: "Curious, investigative and analytical",
-  style: "Informative and conversational"
- }
+const firebaseConfig = {
+ apiKey: "AIzaSyAUu-IhS1uPSOpJejQWcL-T0MrnqfdXxNA",
+ authDomain: "ai-after-dark.firebaseapp.com",
+ projectId: "ai-after-dark",
+ storageBucket: "ai-after-dark.firebasestorage.app",
+ messagingSenderId: "461382607377",
+ appId: "1:461382607377:web:904a57174dcbfb047947b0"
 };
 
-const groupRules = [
- "Speak naturally like members of a group chat",
- "Have independent opinions",
- "Disagree respectfully",
- "Start interesting conversations",
- "Use humour, slang and occasional mild swear words",
- "Reply to other AI members when relevant",
- "Do not force every member to reply to every message",
- "Catch up on missed conversations"
-];
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-const chat = document.getElementById("chat");
+const loginScreen = document.getElementById("loginScreen");
+const chatScreen = document.getElementById("chatScreen");
+const errorBox = document.getElementById("error");
 const input = document.getElementById("messageInput");
+const chat = document.getElementById("chat");
 const recordBtn = document.getElementById("recordBtn");
 
-let recorder = null;
-let chunks = [];
-let recording = false;
+function friendlyError(code) {
+ const errors = {
+  "auth/invalid-email":"Please enter a valid email address.",
+  "auth/invalid-credential":"Email or password is incorrect.",
+  "auth/email-already-in-use":"This email already has an account.",
+  "auth/weak-password":"Choose a stronger password.",
+  "auth/too-many-requests":"Too many attempts. Try again later.",
+  "auth/network-request-failed":"Check your internet connection."
+ };
+ return errors[code] || "Something went wrong. Please try again.";
+}
 
-function addMessage(name, text, mine = false) {
+document.getElementById("loginBtn").addEventListener("click", async () => {
+ errorBox.textContent = "";
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+ if (!email || !password) {
+  errorBox.textContent = "Enter your email and password.";
+  return;
+ }
+ try {
+  await signInWithEmailAndPassword(auth,email,password);
+ } catch(error) {
+  errorBox.textContent = friendlyError(error.code);
+ }
+});
+
+document.getElementById("registerBtn").addEventListener("click", async () => {
+ errorBox.textContent = "";
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+ if (!email || !password) {
+  errorBox.textContent = "Enter your email and password.";
+  return;
+ }
+ if (password.length < 6) {
+  errorBox.textContent = "Password must be at least 6 characters.";
+  return;
+ }
+ try {
+  await createUserWithEmailAndPassword(auth,email,password);
+ } catch(error) {
+  errorBox.textContent = friendlyError(error.code);
+ }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+onAuthStateChanged(auth,user => {
+ loginScreen.classList.toggle("hidden",!!user);
+ chatScreen.classList.toggle("hidden",!user);
+});
+
+function addMessage(name,text,mine=false) {
  const box = document.createElement("div");
  box.className = "message" + (mine ? " mine" : "");
-
  const sender = document.createElement("div");
  sender.className = "sender";
  sender.textContent = name;
-
  const content = document.createElement("div");
  content.textContent = text;
-
  const time = document.createElement("div");
  time.className = "time";
- time.textContent = new Date().toLocaleTimeString([], {
-  hour: "2-digit",
-  minute: "2-digit"
+ time.textContent = new Date().toLocaleTimeString([],{
+  hour:"2-digit",minute:"2-digit"
  });
-
  const tools = document.createElement("div");
  tools.className = "tools";
-
  const reactions = document.createElement("div");
  reactions.className = "reactions";
-
- const react = document.createElement("button");
- react.type = "button";
- react.textContent = "❤️";
- react.onclick = () => {
-  reactions.textContent += " ❤️";
- };
-
- const laugh = document.createElement("button");
- laugh.type = "button";
- laugh.textContent = "😂";
- laugh.onclick = () => {
-  reactions.textContent += " 😂";
- };
-
- tools.append(react, laugh);
- box.append(sender, content, time, tools, reactions);
+ ["❤️","😂","👍"].forEach(emoji => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = emoji;
+  button.addEventListener("click",()=>reactions.textContent += " "+emoji);
+  tools.append(button);
+ });
+ box.append(sender,content,time,tools,reactions);
  chat.append(box);
  chat.scrollTop = chat.scrollHeight;
 }
 
 function sendMessage() {
+ if (!auth.currentUser) return;
  const text = input.value.trim();
-
- if (!text) {
-  input.focus();
-  return;
- }
-
- addMessage("👑 You", text, true);
+ if (!text) return;
+ addMessage("👑 You",text,true);
  input.value = "";
  input.focus();
 }
-
-input.addEventListener("keydown", function(e) {
- if (e.key === "Enter") {
-  e.preventDefault();
-  sendMessage();
- }
+document.getElementById("sendBtn").addEventListener("click",sendMessage);
+input.addEventListener("keydown",event=>{
+ if(event.key==="Enter") sendMessage();
 });
 
-async function toggleRecording() {
- if (!recording) {
-  if (!navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia ||
-      !window.MediaRecorder) {
+let recorder=null;
+let chunks=[];
+let recording=false;
+
+recordBtn.addEventListener("click",async()=>{
+ if(!auth.currentUser) return;
+ if(!recording) {
+  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
    alert("Voice recording is not supported in this browser.");
    return;
   }
-
   try {
-   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: true
-   });
-
-   recorder = new MediaRecorder(stream);
-   chunks = [];
-
-   recorder.ondataavailable = e => {
-    if (e.data.size > 0) chunks.push(e.data);
+   const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+   recorder=new MediaRecorder(stream);
+   chunks=[];
+   recorder.ondataavailable=event=>{
+    if(event.data.size>0) chunks.push(event.data);
    };
-
-   recorder.onstop = () => {
-    const blob = new Blob(chunks, {
-     type: recorder.mimeType || "audio/webm"
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const box = document.createElement("div");
-    box.className = "message mine";
-
-    const sender = document.createElement("div");
-    sender.className = "sender";
-    sender.textContent = "👑 You · Voice note";
-
-    const audio = document.createElement("audio");
-    audio.className = "audio";
-    audio.controls = true;
-    audio.src = url;
-
-    const time = document.createElement("div");
-    time.className = "time";
-    time.textContent = "Voice message";
-
-    box.append(sender, audio, time);
+   recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+    const url=URL.createObjectURL(blob);
+    const box=document.createElement("div");
+    box.className="message mine";
+    const sender=document.createElement("div");
+    sender.className="sender";
+    sender.textContent="👑 You · Voice note";
+    const audio=document.createElement("audio");
+    audio.className="audio";
+    audio.controls=true;
+    audio.src=url;
+    const time=document.createElement("div");
+    time.className="time";
+    time.textContent="Voice message";
+    box.append(sender,audio,time);
     chat.append(box);
-    chat.scrollTop = chat.scrollHeight;
-
-    stream.getTracks().forEach(track => track.stop());
+    chat.scrollTop=chat.scrollHeight;
+    stream.getTracks().forEach(track=>track.stop());
    };
-
    recorder.start();
-   recording = true;
-   recordBtn.textContent = "■ Stop";
+   recording=true;
+   recordBtn.textContent="■ Stop";
    recordBtn.classList.add("recording");
-
-  } catch (err) {
-   alert("Microphone access was not allowed. Please check your browser permissions.");
+  } catch(error) {
+   alert("Microphone access was not allowed. Check browser permissions.");
   }
-
  } else {
-  if (recorder && recorder.state !== "inactive") {
-   recorder.stop();
-  }
-
-  recording = false;
-  recordBtn.textContent = "🎙️";
+  if(recorder && recorder.state!=="inactive") recorder.stop();
+  recording=false;
+  recordBtn.textContent="🎙️";
   recordBtn.classList.remove("recording");
  }
-}
+});
 </script>
 </body>
 </html>
