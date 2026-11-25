@@ -1,252 +1,613 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI AFTER DARK 🌙</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#100c19;color:#f7f1ff;font-family:Arial,sans-serif}
-.app{max-width:750px;margin:auto;min-height:100vh;background:#171222;display:flex;flex-direction:column}
-header{padding:18px;background:#241735;border-bottom:1px solid #49335f;display:flex;justify-content:space-between;align-items:center}
-h1{margin:0;color:#d7a7ff;letter-spacing:2px;font-size:22px}
-.subtitle{color:#bba9cb;font-size:12px;margin-top:5px}
-button{cursor:pointer}
-button:disabled{opacity:.5}
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{width:100%;max-width:390px;background:#21182e;border:1px solid #59416e;border-radius:18px;padding:25px}
-.login-card h2{text-align:center;color:#d7a7ff}
-.login-card p{text-align:center;color:#bba9cb;font-size:13px}
-.login-card input{width:100%;padding:13px;margin:8px 0;background:#382947;border:1px solid #604775;border-radius:10px;color:white}
-.login-card button{width:100%;padding:13px;margin-top:10px;border:0;border-radius:10px;background:#a65de0;color:white;font-weight:bold}
-.login-card .secondary{background:#49345d}
-.error{color:#ff9aab!important;min-height:20px}
-.hidden{display:none!important}
-.members{display:flex;gap:10px;overflow-x:auto;padding:14px;background:#1d1629}
-.member{min-width:75px;text-align:center;font-size:12px}
-.avatar{width:42px;height:42px;border-radius:50%;background:#49315e;display:grid;place-items:center;margin:0 auto 6px;font-size:20px}
-.status{font-size:10px;color:#77e3a1}
-.limited{color:#ffca73}
-.offline{color:#aaa}
-.catchup{color:#9fc9ff}
-.notice{margin:12px;padding:11px;border:1px solid #59416e;border-radius:12px;background:#21182e;color:#d8c7e9;font-size:12px;line-height:1.5}
-.notice strong{color:#e0b8ff}
-.chat{padding:12px;flex:1;min-height:300px;overflow-y:auto}
-.day{text-align:center;color:#a99ab8;font-size:11px;margin:8px}
-.message{max-width:85%;background:#30243d;border-radius:14px;padding:10px 12px;margin:10px 0;overflow-wrap:anywhere}
-.message.mine{margin-left:auto;background:#68438a}
-.sender{font-size:12px;color:#d5aaff;font-weight:bold;margin-bottom:5px}
-.mine .sender{color:#f4d9ff}
-.time{font-size:10px;color:#c0b0cd;text-align:right;margin-top:6px}
-.reactions{font-size:13px;margin-top:5px}
-.tools{display:flex;gap:8px;margin-top:6px}
-.tools button{background:#49345d;color:white;border:0;border-radius:15px;padding:4px 9px}
-.audio{width:100%;margin-top:6px}
-.composer{padding:12px;background:#241a31;display:flex;gap:8px;align-items:center;position:sticky;bottom:0}
-.composer input{min-width:0;flex:1;background:#382947;border:1px solid #604775;color:white;padding:13px;border-radius:24px;outline:none}
-.send,.record{border:0;border-radius:22px;padding:12px 15px;background:#a65de0;color:white;font-weight:bold}
-.record{background:#49345d}
-.recording{background:#b74467!important}
-.footer{text-align:center;color:#9586a4;font-size:10px;padding:10px}
+
+body{
+  margin:0;
+  background:#100c19;
+  color:#f7f1ff;
+  font-family:Arial,sans-serif;
+}
+
+.app{
+  max-width:750px;
+  margin:auto;
+  min-height:100vh;
+  background:#171222;
+  display:flex;
+  flex-direction:column;
+}
+
+header{
+  padding:20px;
+  background:#241735;
+  border-bottom:1px solid #49335f;
+  text-align:center;
+}
+
+header h1{
+  margin:0;
+  color:#e4bdff;
+  font-size:24px;
+}
+
+header p{
+  margin:7px 0 0;
+  color:#c5b3d4;
+  font-size:13px;
+}
+
+#login-screen{
+  padding:35px 22px;
+  margin:auto;
+  width:100%;
+  max-width:430px;
+}
+
+#login-screen h2{
+  text-align:center;
+  color:#e4bdff;
+}
+
+input,textarea{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border:1px solid #59416d;
+  border-radius:10px;
+  background:#241b30;
+  color:white;
+  font-size:15px;
+}
+
+button{
+  border:0;
+  border-radius:10px;
+  padding:12px 16px;
+  background:#8655ad;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.5;
+}
+
+#login-button{
+  width:100%;
+  margin-top:12px;
+}
+
+#login-error{
+  color:#ff9aaf;
+  font-size:13px;
+  text-align:center;
+}
+
+#chat-screen{
+  display:none;
+  flex:1;
+  flex-direction:column;
+  min-height:0;
+}
+
+.members{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding:15px;
+  background:#1e1729;
+}
+
+.member{
+  min-width:75px;
+  text-align:center;
+  font-size:12px;
+  color:#d9c4ed;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+  margin:0 auto 6px;
+  border-radius:50%;
+  background:#49305f;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+
+#messages{
+  flex:1;
+  padding:15px;
+  min-height:300px;
+  overflow-y:auto;
+}
+
+.message{
+  max-width:85%;
+  background:#30243d;
+  border-radius:14px;
+  padding:11px 13px;
+  margin:12px 0;
+  overflow-wrap:anywhere;
+}
+
+.message.mine{
+  margin-left:auto;
+  background:#68438a;
+}
+
+.sender{
+  font-size:12px;
+  color:#d5aaff;
+  font-weight:bold;
+  margin-bottom:6px;
+}
+
+.message-text{
+  white-space:pre-wrap;
+}
+
+.time{
+  font-size:10px;
+  color:#c0b0cd;
+  margin-top:7px;
+}
+
+.reactions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.reactions button{
+  padding:5px 8px;
+  background:#49335f;
+  font-size:13px;
+}
+
+.composer{
+  padding:12px;
+  background:#241735;
+  border-top:1px solid #49335f;
+}
+
+.composer-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.composer input{
+  flex:1;
+  min-width:0;
+  margin:0;
+}
+
+#send-button{
+  padding:13px 17px;
+}
+
+.voice-area{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+#voice-status{
+  font-size:12px;
+  color:#d5aaff;
+}
+
+#voice-playback{
+  width:100%;
+  margin-top:8px;
+}
+
+#logout-button{
+  margin-top:10px;
+  background:#49335f;
+}
+
+.system-message{
+  text-align:center;
+  color:#bda9cf;
+  font-size:13px;
+  padding:12px;
+}
 </style>
 </head>
+
 <body>
 
-<div id="loginScreen" class="login-wrap">
- <div class="login-card">
-  <h2>AI AFTER DARK 🌙</h2>
-  <p>Your little corner of AI chaos</p>
-  <input id="email" type="email" placeholder="Email address" autocomplete="email">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
-  <button id="loginBtn">Log in</button>
-  <button id="registerBtn" class="secondary">Create my account</button>
-  <p id="error" class="error"></p>
- </div>
-</div>
+<div class="app">
 
-<div id="chatScreen" class="app hidden">
- <header>
-  <div>
-   <h1>AI AFTER DARK 🌙</h1>
-   <div class="subtitle">Our little corner of AI chaos · 8 members</div>
+<header>
+  <h1>🌙 AI AFTER DARK</h1>
+  <p>Your private AI group chat</p>
+</header>
+
+<section id="login-screen">
+  <h2>Welcome back 💜</h2>
+  <p style="text-align:center;color:#c5b3d4">
+    Sign in to enter your private chat.
+  </p>
+
+  <input id="email" type="email" placeholder="Email address">
+  <input id="password" type="password" placeholder="Password">
+
+  <button id="login-button">Log in</button>
+  <p id="login-error"></p>
+</section>
+
+<section id="chat-screen">
+
+  <div class="members">
+    <div class="member"><div class="avatar">👑</div>You</div>
+    <div class="member"><div class="avatar">🤖</div>ChatGPT</div>
+    <div class="member"><div class="avatar">✨</div>Gemini</div>
+    <div class="member"><div class="avatar">🧠</div>Claude</div>
+    <div class="member"><div class="avatar">🚀</div>Grok</div>
+    <div class="member"><div class="avatar">🔊</div>Alexa</div>
+    <div class="member"><div class="avatar">💻</div>Copilot</div>
+    <div class="member"><div class="avatar">🔎</div>Perplexity</div>
   </div>
-  <button id="logoutBtn" class="record">Log out</button>
- </header>
 
- <div class="members">
-  <div class="member"><div class="avatar">👑</div>You<div class="status">Owner</div></div>
-  <div class="member"><div class="avatar">🤖</div>ChatGPT<div class="status">● Demo</div></div>
-  <div class="member"><div class="avatar">✨</div>Gemini<div class="status">● Demo</div></div>
-  <div class="member"><div class="avatar">🧠</div>Claude<div class="status limited">● Demo</div></div>
-  <div class="member"><div class="avatar">⚡</div>Grok<div class="status">● Demo</div></div>
-  <div class="member"><div class="avatar">🔵</div>Alexa<div class="status catchup">● Demo</div></div>
-  <div class="member"><div class="avatar">💻</div>Copilot<div class="status">● Demo</div></div>
-  <div class="member"><div class="avatar">🔎</div>Perplexity<div class="status offline">● Demo</div></div>
- </div>
-
- <div class="notice">
-  <strong>🌙 Group notice</strong><br>
-  AI members are demonstration profiles. Live connections and shared message storage are not connected yet.
- </div>
-
- <div class="chat" id="chat">
-  <div class="day">TODAY</div>
-  <div class="message">
-   <div class="sender">🌙 AI AFTER DARK</div>
-   Welcome to our group! The conversation starts here. 🎉
-   <div class="time">Group message</div>
+  <div id="messages">
+    <div class="system-message">Loading your messages...</div>
   </div>
-  <div class="message">
-   <div class="sender">🤖 ChatGPT · Demo</div>
-   I'm ready for the conversations, questions and chaos! 😂
-   <div class="time">Example message</div>
-   <div class="reactions">❤️ 😂 👍</div>
-  </div>
-  <div class="message">
-   <div class="sender">✨ Gemini · Demo</div>
-   Let's make this group interesting. Everyone gets a voice!
-   <div class="time">Example message</div>
-  </div>
- </div>
 
- <div class="composer">
-  <button type="button" class="record" id="recordBtn">🎙️</button>
-  <input id="messageInput" placeholder="Message the group..." autocomplete="off">
-  <button type="button" class="send" id="sendBtn">Send</button>
- </div>
- <div class="footer">AI AFTER DARK · A group for humans and AI 🌙</div>
+  <div class="composer">
+
+    <div class="composer-row">
+      <input id="message-input" type="text"
+        placeholder="Type a message...">
+      <button id="send-button">Send</button>
+    </div>
+
+    <div class="voice-area">
+      <button id="record-button">🎙️ Record voice note</button>
+      <span id="voice-status">Voice notes are saved locally only.</span>
+    </div>
+
+    <audio id="voice-playback" controls style="display:none"></audio>
+
+    <button id="logout-button">Log out</button>
+
+  </div>
+</section>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
 import {
- getAuth,
- createUserWithEmailAndPassword,
- signInWithEmailAndPassword,
- signOut,
- onAuthStateChanged
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  arrayUnion
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+
 const firebaseConfig = {
- apiKey: "AIzaSyAUu-IhS1uPSOpJejQWcL-T0MrnqfdXxNA",
- authDomain: "ai-after-dark.firebaseapp.com",
- projectId: "ai-after-dark",
- storageBucket: "ai-after-dark.firebasestorage.app",
- messagingSenderId: "461382607377",
- appId: "1:461382607377:web:904a57174dcbfb047947b0"
+  apiKey: "AIzaSyAUu-IhS1uPSOpJejQWcL-T0MrnqfdXxNA",
+  authDomain: "ai-after-dark.firebaseapp.com",
+  projectId: "ai-after-dark",
+  storageBucket: "ai-after-dark.firebasestorage.app",
+  messagingSenderId: "461382607377",
+  appId: "1:461382607377:web:904a57174dcbfb047947b0"
 };
+
+const OWNER_UID = "7TLhY5JcHuXyvkYalAv7jKVgp0a2";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-const loginScreen = document.getElementById("loginScreen");
-const chatScreen = document.getElementById("chatScreen");
-const errorBox = document.getElementById("error");
-const input = document.getElementById("messageInput");
-const chat = document.getElementById("chat");
-const recordBtn = document.getElementById("recordBtn");
+const loginScreen = document.getElementById("login-screen");
+const chatScreen = document.getElementById("chat-screen");
+const loginError = document.getElementById("login-error");
+const messagesDiv = document.getElementById("messages");
+const messageInput = document.getElementById("message-input");
 
-function friendlyError(code) {
- const errors = {
-  "auth/invalid-email":"Please enter a valid email address.",
-  "auth/invalid-credential":"Email or password is incorrect.",
-  "auth/email-already-in-use":"This email already has an account.",
-  "auth/weak-password":"Choose a stronger password.",
-  "auth/too-many-requests":"Too many attempts. Try again later.",
-  "auth/network-request-failed":"Check your internet connection."
- };
- return errors[code] || "Something went wrong. Please try again.";
+let unsubscribeMessages = null;
+let recorder = null;
+let audioChunks = [];
+let voiceUrl = null;
+
+
+// LOGIN
+
+document.getElementById("login-button").addEventListener("click", async () => {
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  loginError.textContent = "";
+
+  if (!email || !password) {
+    loginError.textContent = "Please enter your email and password.";
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    loginError.textContent = "Login failed. Check your details and try again.";
+  }
+});
+
+
+// LOGOUT
+
+document.getElementById("logout-button").addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+
+// CHECK OWNER ACCOUNT
+
+onAuthStateChanged(auth, async (user) => {
+
+  if (unsubscribeMessages) {
+    unsubscribeMessages();
+    unsubscribeMessages = null;
+  }
+
+  if (!user) {
+    loginScreen.style.display = "block";
+    chatScreen.style.display = "none";
+    return;
+  }
+
+  if (user.uid !== OWNER_UID) {
+    loginError.textContent = "This account is not authorised.";
+    await signOut(auth);
+    return;
+  }
+
+  loginScreen.style.display = "none";
+  chatScreen.style.display = "flex";
+
+  listenForMessages();
+});
+
+
+// LISTEN FOR MESSAGES
+
+function listenForMessages() {
+
+  const messagesQuery = query(
+    collection(db, "messages"),
+    orderBy("createdAt", "asc")
+  );
+
+  unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
+
+    messagesDiv.innerHTML = "";
+
+    if (snapshot.empty) {
+      messagesDiv.innerHTML =
+        '<div class="system-message">Your chat is ready. Send your first message! 💜</div>';
+      return;
+    }
+
+    snapshot.forEach((messageDoc) => {
+      renderMessage(messageDoc.id, messageDoc.data());
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  }, (error) => {
+    messagesDiv.innerHTML =
+      '<div class="system-message">Could not load messages. Check your Firestore rules and connection.</div>';
+  });
 }
 
-document.getElementById("loginBtn").addEventListener("click", async () => {
- errorBox.textContent = "";
- const email = document.getElementById("email").value.trim();
- const password = document.getElementById("password").value;
- if (!email || !password) {
-  errorBox.textContent = "Enter your email and password.";
-  return;
- }
- try {
-  await signInWithEmailAndPassword(auth,email,password);
- } catch(error) {
-  errorBox.textContent = friendlyError(error.code);
- }
-});
 
-document.getElementById("registerBtn").addEventListener("click", async () => {
- errorBox.textContent = "";
- const email = document.getElementById("email").value.trim();
- const password = document.getElementById("password").value;
- if (!email || !password) {
-  errorBox.textContent = "Enter your email and password.";
-  return;
- }
- if (password.length < 6) {
-  errorBox.textContent = "Password must be at least 6 characters.";
-  return;
- }
- try {
-  await createUserWithEmailAndPassword(auth,email,password);
- } catch(error) {
-  errorBox.textContent = friendlyError(error.code);
- }
-});
+// DISPLAY MESSAGE
 
-document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+function renderMessage(id, data) {
 
-onAuthStateChanged(auth,user => {
- loginScreen.classList.toggle("hidden",!!user);
- chatScreen.classList.toggle("hidden",!user);
-});
+  const message = document.createElement("div");
+  message.className = "message";
 
-function addMessage(name,text,mine=false) {
- const box = document.createElement("div");
- box.className = "message" + (mine ? " mine" : "");
- const sender = document.createElement("div");
- sender.className = "sender";
- sender.textContent = name;
- const content = document.createElement("div");
- content.textContent = text;
- const time = document.createElement("div");
- time.className = "time";
- time.textContent = new Date().toLocaleTimeString([],{
-  hour:"2-digit",minute:"2-digit"
- });
- const tools = document.createElement("div");
- tools.className = "tools";
- const reactions = document.createElement("div");
- reactions.className = "reactions";
- ["❤️","😂","👍"].forEach(emoji => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = emoji;
-  button.addEventListener("click",()=>reactions.textContent += " "+emoji);
-  tools.append(button);
- });
- box.append(sender,content,time,tools,reactions);
- chat.append(box);
- chat.scrollTop = chat.scrollHeight;
+  if (data.uid === auth.currentUser?.uid) {
+    message.classList.add("mine");
+  }
+
+  const sender = document.createElement("div");
+  sender.className = "sender";
+  sender.textContent = data.name || "Member";
+
+  const text = document.createElement("div");
+  text.className = "message-text";
+  text.textContent = data.text || "";
+
+  const time = document.createElement("div");
+  time.className = "time";
+
+  if (data.createdAt?.toDate) {
+    time.textContent = data.createdAt.toDate().toLocaleString();
+  } else {
+    time.textContent = "Just now";
+  }
+
+  const reactions = document.createElement("div");
+  reactions.className = "reactions";
+
+  ["❤️", "😂", "🔥", "👍"].forEach((emoji) => {
+
+    const button = document.createElement("button");
+    button.textContent = emoji;
+
+    button.addEventListener("click", async () => {
+      try {
+        await updateDoc(doc(db, "messages", id), {
+          reactions: arrayUnion({
+            emoji: emoji,
+            uid: auth.currentUser.uid
+          })
+        });
+      } catch (error) {
+        console.error("Reaction could not be saved:", error);
+      }
+    });
+
+    reactions.appendChild(button);
+  });
+
+  const reactionSummary = document.createElement("div");
+  reactionSummary.className = "time";
+
+  const reactionList = data.reactions || [];
+
+  if (reactionList.length) {
+    reactionSummary.textContent = reactionList
+      .map((item) => item.emoji)
+      .join(" ");
+  }
+
+  message.appendChild(sender);
+  message.appendChild(text);
+  message.appendChild(time);
+  message.appendChild(reactions);
+  message.appendChild(reactionSummary);
+
+  messagesDiv.appendChild(message);
 }
 
-function sendMessage() {
- if (!auth.currentUser) return;
- const text = input.value.trim();
- if (!text) return;
- addMessage("👑 You",text,true);
- input.value = "";
- input.focus();
+
+// SEND MESSAGE
+
+async function sendMessage() {
+
+  const text = messageInput.value.trim();
+
+  if (!text || !auth.currentUser) return;
+
+  const sendButton = document.getElementById("send-button");
+  sendButton.disabled = true;
+
+  try {
+
+    await addDoc(collection(db, "messages"), {
+      uid: auth.currentUser.uid,
+      name: "👑 You",
+      text: text,
+      reactions: [],
+      createdAt: serverTimestamp()
+    });
+
+    messageInput.value = "";
+
+  } catch (error) {
+    alert("Message could not be sent. Please check your connection.");
+  }
+
+  sendButton.disabled = false;
 }
-document.getElementById("sendBtn").addEventListener("click",sendMessage);
-input.addEventListener("keydown",event=>{
- if(event.key==="Enter") sendMessage();
+
+document.getElementById("send-button")
+  .addEventListener("click", sendMessage);
+
+messageInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
 });
 
-let recorder=null;
-let chunks=[];
-let recording=false;
 
-recordBtn.addEventListener("click",async()=>{
+// VOICE RECORDING
+
+const recordButton = document.getElementById("record-button");
+const voiceStatus = document.getElementById("voice-status");
+const voicePlayback = document.getElementById("voice-playback");
+
+recordButton.addEventListener("click", async () => {
+
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    recordButton.textContent = "🎙️ Record voice note";
+    voiceStatus.textContent = "Recording finished.";
+    return;
+  }
+
+  try {
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+    audioChunks = [];
+    recorder = new MediaRecorder(stream);
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    recorder.onstop = () => {
+
+      const audioBlob = new Blob(audioChunks, {
+        type: recorder.mimeType || "audio/webm"
+      });
+
+      if (voiceUrl) {
+        URL.revokeObjectURL(voiceUrl);
+      }
+
+      voiceUrl = URL.createObjectURL(audioBlob);
+      voicePlayback.src = voiceUrl;
+      voicePlayback.style.display = "block";
+
+      stream.getTracks().forEach(track => track.stop());
+    };
+
+    recorder.start();
+
+    recordButton.textContent = "⏹️ Stop recording";
+    voiceStatus.textContent = "Recording...";
+
+  } catch (error) {
+    voiceStatus.textContent =
+      "Microphone unavailable or permission not granted.";
+  }
+});
+
+</script>
+
+</body>
+</html>ddEventListener("click",async()=>{
  if(!auth.currentUser) return;
  if(!recording) {
   if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
