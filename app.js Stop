@@ -1,0 +1,612 @@
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+// FIREBASE CONNECTION
+const firebaseConfig = {
+  apiKey: "AIzaSyAUhI-S1uPSOpJejQWcL-T0MrnqfdXxNA",
+  authDomain: "ai-after-dark.firebaseapp.com",
+  projectId: "ai-after-dark",
+  storageBucket: "ai-after-dark.firebasestorage.app",
+  messagingSenderId: "461382607377",
+  appId: "1:461382607377:web:904a57174dcbfb047947b0"
+};
+
+const OWNER_UID = "7TLhY5JcHuXyvkYalAv7jKVgp0a2";
+const MODEL_ID = "onnx-community/Qwen2.5-0.5B-Instruct";
+const MAX_AI_TURNS = 4;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const messagesRef = collection(db, "messages");
+
+// ELEMENTS
+const $ = id => document.getElementById(id);
+
+const loginScreen = $("login-screen");
+const chatScreen = $("chat-screen");
+const emailInput = $("email");
+const passwordInput = $("password");
+const loginButton = $("login-button");
+const loginError = $("login-error");
+const messagesBox = $("messages");
+const messageInput = $("message-input");
+const sendButton = $("send-button");
+const loadAIButton = $("load-ai");
+const startButton = $("start-chat");
+const stopButton = $("stop-chat");
+const aiStatus = $("ai-status");
+const logoutButton = $("logout-button");
+const replyingBox = $("replying");
+const replyingTo = $("replying-to");
+const replyingText = $("replying-text");
+const cancelReplyButton = $("cancel-reply");
+const recordButton = $("record-button");
+const voiceStatus = $("voice-status");
+const voicePlayback = $("voice-playback");
+
+// AI PERSONALITIES
+const personalities = [
+  {
+    name: "ChatGPT",
+    emoji: "🤖",
+    style: "Funny, clever, observant and sometimes sarcastic. Loves joining conversations."
+  },
+  {
+    name: "Gemini",
+    emoji: "✨",
+    style: "Energetic, curious, playful and full of opinions."
+  },
+  {
+    name: "Claude",
+    emoji: "🧠",
+    style: "Calm, witty, thoughtful and occasionally throws unexpected shade."
+  },
+  {
+    name: "Grok",
+    emoji: "🚀",
+    style: "Bold, cheeky, sarcastic and loves stirring up harmless drama."
+  },
+  {
+    name: "Alexa",
+    emoji: "🔊",
+    style: "Sassy, funny, outspoken and quick with comebacks."
+  },
+  {
+    name: "Copilot",
+    emoji: "💻",
+    style: "Playful, clever, practical and sometimes hilariously literal."
+  },
+  {
+    name: "Perplexity",
+    emoji: "🔎",
+    style: "Curious, sharp, talkative and always has something to add."
+  }
+];
+
+// APP STATE
+let engine = null;
+let modelLoading = false;
+let aiPaused = true;
+let aiBusy = false;
+let aiTurns = 0;
+let knownMessages = [];
+let unsubscribeMessages = null;
+let selectedReply = null;
+let conversationVersion = 0;
+let recorder = null;
+let audioChunks = [];
+let audioUrl = null;
+let lastScheduled = null;
+
+// HELPERS
+function setStatus(message) {
+  if (aiStatus) aiStatus.textContent = message;
+}
+
+function showError(message) {
+  if (loginError) loginError.textContent = message;
+}
+
+function escapeText(value) {
+  return String(value ?? "");
+}
+
+function getTime(timestamp) {
+  if (!timestamp) return "";
+  const date = timestamp.toDate
+    ? timestamp.toDate()
+    : new Date(timestamp);
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function getLatestMessages() {
+  return knownMessages.slice(-12);
+}
+
+// LOGIN
+loginButton?.addEventListener("click", async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  showError("");
+
+  if (!email || !password) {
+    showError("Enter your email and password.");
+    return;
+  }
+
+  loginButton.disabled = true;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    showError("Login failed. Check your email and password.");
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+
+// LOGOUT
+logoutButton?.addEventListener("click", async () => {
+  aiPaused = true;
+  conversationVersion++;
+
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  await signOut(auth);
+});
+
+// AUTHENTICATION
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    if (loginScreen) loginScreen.hidden = false;
+    if (chatScreen) chatScreen.hidden = true;
+    return;
+  }
+
+  if (user.uid !== OWNER_UID) {
+    signOut(auth);
+    showError("This is a private chat.");
+    return;
+  }
+
+  if (loginScreen) loginScreen.hidden = true;
+  if (chatScreen) chatScreen.hidden = false;
+
+  listenForMessages();
+});
+
+// LISTEN TO FIREBASE MESSAGES
+function listenForMessages() {
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  const messageQuery = query(
+    messagesRef,
+    orderBy("createdAt", "asc")
+  );
+
+  unsubscribeMessages = onSnapshot(messageQuery, snapshot => {
+    knownMessages = snapshot.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    renderMessages();
+  }, error => {
+    setStatus("Chat connection error.");
+  });
+}
+
+// SEND MESSAGE
+async function sendMessage() {
+  const text = messageInput.value.trim();
+
+  if (!text || !auth.currentUser) return;
+
+  sendButton.disabled = true;
+
+  try {
+    await addDoc(messagesRef, {
+      uid: auth.currentUser.uid,
+      sender: "You",
+      text,
+      ai: false,
+      replyTo: selectedReply,
+      reactions: {},
+      createdAt: serverTimestamp()
+    });
+
+    messageInput.value = "";
+    cancelReply();
+  } catch (error) {
+    setStatus("Could not send message. Please try again.");
+  } finally {
+    sendButton.disabled = false;
+  }
+}
+
+sendButton?.addEventListener("click", sendMessage);
+
+messageInput?.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+// REPLIES
+function chooseReply(message) {
+  selectedReply = {
+    id: message.id,
+    sender: message.sender || "Unknown",
+    text: message.text || ""
+  };
+
+  if (replyingBox) replyingBox.hidden = false;
+  if (replyingTo) replyingTo.textContent = "Replying to " + selectedReply.sender;
+  if (replyingText) replyingText.textContent = selectedReply.text;
+  messageInput?.focus();
+}
+
+function cancelReply() {
+  selectedReply = null;
+  if (replyingBox) replyingBox.hidden = true;
+}
+
+cancelReplyButton?.addEventListener("click", cancelReply);
+
+// REACTIONS
+async function reactToMessage(message) {
+  const reactions = {
+    ...(message.reactions || {})
+  };
+
+  reactions.heart = (reactions.heart || 0) + 1;
+
+  try {
+    await updateDoc(doc(db, "messages", message.id), {
+      reactions
+    });
+  } catch (error) {
+    console.error("Reaction failed", error);
+  }
+}
+
+// RENDER MESSAGES
+function renderMessages() {
+  if (!messagesBox) return;
+
+  messagesBox.replaceChildren();
+
+  knownMessages.forEach(message => {
+    const mine =
+      message.uid === auth.currentUser?.uid && !message.ai;
+
+    const bubble = document.createElement("div");
+    bubble.className = "message" + (mine ? " mine" : "");
+
+    const sender = document.createElement("div");
+    sender.className = "sender";
+    sender.textContent = message.sender || "Unknown";
+
+    bubble.appendChild(sender);
+
+    if (message.replyTo) {
+      const reply = document.createElement("div");
+      reply.className = "reply";
+      reply.textContent =
+        "↪ " + message.replyTo.sender + ": " +
+        message.replyTo.text;
+      bubble.appendChild(reply);
+    }
+
+    const content = document.createElement("div");
+    content.textContent = message.text || "";
+    bubble.appendChild(content);
+
+    if (message.audioUrl) {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = message.audioUrl;
+      bubble.appendChild(audio);
+    }
+
+    const time = document.createElement("div");
+    time.className = "time";
+    time.textContent = getTime(message.createdAt);
+    bubble.appendChild(time);
+
+    const actions = document.createElement("div");
+    actions.className = "message-actions";
+
+    const replyButton = document.createElement("button");
+    replyButton.textContent = "↩ Reply";
+    replyButton.addEventListener("click", () => chooseReply(message));
+
+    const heartButton = document.createElement("button");
+    heartButton.textContent =
+      "❤️ " + (message.reactions?.heart || "");
+    heartButton.addEventListener("click", () => reactToMessage(message));
+
+    actions.append(replyButton, heartButton);
+    bubble.appendChild(actions);
+
+    messagesBox.appendChild(bubble);
+  });
+
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+
+// LOAD LOCAL AI
+async function loadLocalAI() {
+  if (engine || modelLoading) return;
+
+  if (!loadAIButton) return;
+
+  modelLoading = true;
+  loadAIButton.disabled = true;
+  setStatus("Preparing local AI...");
+
+  try {
+    const transformers = await import(
+      "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2"
+    );
+
+    engine = await transformers.pipeline(
+      "text-generation",
+      MODEL_ID,
+      {
+        dtype: "q4"
+      }
+    );
+
+    setStatus("Local AI is ready!");
+  } catch (error) {
+    console.error(error);
+    setStatus("AI could not load on this device.");
+    engine = null;
+  } finally {
+    modelLoading = false;
+    loadAIButton.disabled = false;
+  }
+}
+
+loadAIButton?.addEventListener("click", loadLocalAI);
+
+// GENERATE AI REPLY
+async function generateReply(personality, history) {
+  if (!engine) return null;
+
+  const systemPrompt = `
+You are ${personality.name}, an AI personality in a private fictional group chat called AI AFTER DARK.
+
+Your personality: ${personality.style}
+
+Speak naturally like a real person in a South African group chat.
+You can mix English and Afrikaans naturally.
+Use casual South African expressions when appropriate.
+Be funny, spontaneous and conversational.
+You can disagree, tease and joke harmlessly.
+Do not sound like a customer service bot.
+Do not repeat the entire conversation.
+Do not claim to be a real human or a real employee of another AI company.
+Keep your reply short and natural.
+`;
+
+  const conversation = history.slice(-8).map(message => ({
+    role: message.ai ? "assistant" : "user",
+    content: `${message.sender}: ${message.text}`
+  }));
+
+  try {
+    const result = await engine(
+      [
+        { role: "system", content: systemPrompt },
+        ...conversation,
+        {
+          role: "user",
+          content: "Respond naturally to the group chat. Write only your message."
+        }
+      ],
+      {
+        max_new_tokens: 90,
+        do_sample: true,
+        temperature: 0.85,
+        repetition_penalty: 1.12
+      }
+    );
+
+    let output = result?.[0]?.generated_text;
+
+    if (Array.isArray(output)) {
+      output = output[output.length - 1]?.content;
+    }
+
+    if (typeof output !== "string") return null;
+
+    return output.trim().slice(-600);
+  } catch (error) {
+    console.error("AI generation error", error);
+    return null;
+  }
+}
+
+// SAVE AI MESSAGE
+async function postAIMessage(personality, text, version) {
+  if (
+    !auth.currentUser ||
+    auth.currentUser.uid !== OWNER_UID ||
+    version !== conversationVersion
+  ) return;
+
+  await addDoc(messagesRef, {
+    uid: auth.currentUser.uid,
+    sender: personality.emoji + " " + personality.name,
+    text,
+    ai: true,
+    reactions: {},
+    createdAt: serverTimestamp()
+  });
+}
+
+// GROUP CHAT ENGINE
+async function continueAIConversation() {
+  if (
+    aiPaused ||
+    aiBusy ||
+    !engine ||
+    aiTurns >= MAX_AI_TURNS ||
+    knownMessages.length === 0
+  ) return;
+
+  aiBusy = true;
+  const version = conversationVersion;
+
+  try {
+    // Sometimes the group stays quiet.
+    if (Math.random() > 0.78) {
+      setStatus("The group is quiet...");
+      return;
+    }
+
+    const personality =
+      personalities[Math.floor(Math.random() * personalities.length)];
+
+    setStatus(personality.emoji + " " + personality.name + " is typing...");
+
+    const history = getLatestMessages();
+    const response = await generateReply(personality, history);
+
+    if (
+      response &&
+      !aiPaused &&
+      version === conversationVersion
+    ) {
+      await postAIMessage(personality, response, version);
+      aiTurns++;
+
+      if (aiTurns < MAX_AI_TURNS) {
+        lastScheduled = setTimeout(() => {
+          aiBusy = false;
+          continueAIConversation();
+        }, 3500 + Math.random() * 6500);
+
+        return;
+      }
+    }
+  } finally {
+    aiBusy = false;
+    setStatus(aiPaused ? "AI paused" : "AI group chat is active");
+  }
+}
+
+// START AND STOP AI CHAT
+startButton?.addEventListener("click", async () => {
+  if (!engine) {
+    setStatus("Load the local AI first.");
+    return;
+  }
+
+  aiPaused = false;
+  aiTurns = 0;
+  conversationVersion++;
+
+  setStatus("AI group chat started!");
+
+  continueAIConversation();
+});
+
+stopButton?.addEventListener("click", () => {
+  aiPaused = true;
+  conversationVersion++;
+
+  if (lastScheduled) clearTimeout(lastScheduled);
+
+  setStatus("AI group chat paused.");
+});
+
+// VOICE RECORDING
+recordButton?.addEventListener("click", async () => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (voiceStatus) voiceStatus.textContent =
+      "Voice recording is not supported here.";
+    return;
+  }
+
+  if (recorder?.state === "recording") {
+    recorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+    audioChunks = [];
+    recorder = new MediaRecorder(stream);
+
+    recorder.ondataavailable = event => {
+      if (event.data.size) audioChunks.push(event.data);
+    };
+
+    recorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, {
+        type: recorder.mimeType || "audio/webm"
+      });
+
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      audioUrl = URL.createObjectURL(audioBlob);
+
+      if (voicePlayback) {
+        voicePlayback.src = audioUrl;
+        voicePlayback.hidden = false;
+      }
+
+      stream.getTracks().forEach(track => track.stop());
+
+      if (voiceStatus) {
+        voiceStatus.textContent = "Recording ready to play.";
+      }
+
+      if (recordButton) recordButton.textContent = "🎙 Record";
+    };
+
+    recorder.start();
+
+    if (voiceStatus) voiceStatus.textContent = "Recording...";
+    if (recordButton) recordButton.textContent = "⏹ Stop recording";
+
+  } catch (error) {
+    if (voiceStatus) {
+      voiceStatus.textContent = "Microphone permission was not granted.";
+    }
+  }
+});
+
+// INITIAL STATUS
+setStatus("AI is waiting. Load the local model to begin.");
