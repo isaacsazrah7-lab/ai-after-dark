@@ -3,715 +3,126 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#100c19">
 <title>AI AFTER DARK 🌙</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#100c19;color:#f7f1ff;font-family:Arial,sans-serif}
-.app{max-width:750px;margin:auto;min-height:100vh;background:#171222;display:flex;flex-direction:column}
-header{padding:18px;background:#241735;border-bottom:1px solid #49335f;text-align:center}
-header h1{margin:0;color:#e4bdff;font-size:24px}
-header p{margin:7px 0 0;color:#c5b3d4;font-size:13px}
-#login-screen{padding:35px 22px;margin:auto;width:100%;max-width:430px}
-#login-screen h2{text-align:center;color:#e4bdff}
-input,textarea{width:100%;padding:14px;margin:8px 0;border:1px solid #59416d;border-radius:10px;background:#241b30;color:white;font-size:15px}
-button{border:0;border-radius:10px;padding:11px 14px;background:#8655ad;color:white;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.5}
-#login-button{width:100%;margin-top:12px}
-#login-error{color:#ff9aaf;font-size:13px;text-align:center}
-#chat-screen{display:none;flex:1;flex-direction:column;min-height:0}
-.members{display:flex;gap:10px;overflow-x:auto;padding:13px;background:#1e1729}
-.member{min-width:72px;text-align:center;font-size:12px;color:#d9c4ed}
-.avatar{width:40px;height:40px;margin:0 auto 6px;border-radius:50%;background:#49305f;display:flex;align-items:center;justify-content:center;font-size:21px}
-#messages{flex:1;padding:14px;min-height:300px;overflow-y:auto}
-.message{max-width:88%;background:#30243d;border-radius:14px;padding:11px 13px;margin:12px 0;overflow-wrap:anywhere}
-.message.mine{margin-left:auto;background:#68438a}
-.message.ai{border:1px solid #59416d}
-.sender{font-size:12px;color:#d5aaff;font-weight:bold;margin-bottom:6px}
-.message-text{white-space:pre-wrap}
-.time{font-size:10px;color:#c0b0cd;margin-top:7px}
-.reply-quote{border-left:3px solid #d5aaff;background:#241b30;padding:7px 9px;margin:0 0 8px;border-radius:5px;font-size:12px;color:#e3d2f0}
-.reply-quote strong{display:block;color:#e8c9ff;margin-bottom:3px}
-.message-actions,.reactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.message-actions button,.reactions button{padding:5px 8px;background:#49335f;font-size:12px}
-.composer{padding:12px;background:#241735;border-top:1px solid #49335f}
-.composer-row{display:flex;gap:8px;align-items:center}
-.composer-row input{flex:1;min-width:0;margin:0}
-#send-button{padding:13px 16px}
-.replying{display:none;background:#30243d;border-left:3px solid #d5aaff;padding:8px 10px;margin-bottom:8px;border-radius:7px;font-size:12px}
-.replying button{float:right;padding:4px 8px;background:#49335f}
-.voice-area{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
-#voice-status{font-size:12px;color:#d5aaff}
-#voice-playback{width:100%;margin-top:8px}
-#logout-button{margin-top:10px;background:#49335f}
-.system-message{text-align:center;color:#bda9cf;font-size:13px;padding:12px}
-.ai-panel{padding:12px;background:#20172d;border-bottom:1px solid #49335f}
-.ai-panel h3{margin:0 0 8px;color:#e4bdff;font-size:15px}
-.ai-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.ai-buttons button{flex:1;min-width:130px}
-#ai-status{font-size:12px;color:#d5aaff;margin-top:9px;white-space:pre-wrap}
-#load-ai{background:#8655ad}
-#start-chat{background:#614080}
-#stop-chat{background:#49335f}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 <div class="app">
+
 <header>
-<h1>🌙 AI AFTER DARK</h1>
-<p>Your private AI group chat</p>
+  <div>
+    <h1>🌙 AI AFTER DARK</h1>
+    <p>Your private AI group chat</p>
+  </div>
 </header>
 
 <section id="login-screen">
-<h2>Welcome back 💜</h2>
-<p style="text-align:center;color:#c5b3d4">Sign in to enter your private chat.</p>
-<input id="email" type="email" placeholder="Email address" autocomplete="username">
-<input id="password" type="password" placeholder="Password" autocomplete="current-password">
-<button id="login-button">Log in</button>
-<p id="login-error"></p>
+  <h2>Welcome back 💜</h2>
+  <p>Sign in to enter your private chat.</p>
+
+  <input id="email" type="email"
+    placeholder="Email address" autocomplete="username">
+
+  <input id="password" type="password"
+    placeholder="Password" autocomplete="current-password">
+
+  <button id="login-button">Log in</button>
+  <p id="login-error"></p>
 </section>
 
-<section id="chat-screen">
+<section id="chat-screen" hidden>
 
-<div class="members">
-<div class="member"><div class="avatar">👑</div>You</div>
-<div class="member"><div class="avatar">🤖</div>ChatGPT</div>
-<div class="member"><div class="avatar">✨</div>Gemini</div>
-<div class="member"><div class="avatar">🧠</div>Claude</div>
-<div class="member"><div class="avatar">🚀</div>Grok</div>
-<div class="member"><div class="avatar">🔊</div>Alexa</div>
-<div class="member"><div class="avatar">💻</div>Copilot</div>
-<div class="member"><div class="avatar">🔎</div>Perplexity</div>
-</div>
+  <div class="members">
+    <div class="member">
+      <div class="avatar">👑</div>You
+    </div>
+    <div class="member">
+      <div class="avatar">🤖</div>ChatGPT
+    </div>
+    <div class="member">
+      <div class="avatar">✨</div>Gemini
+    </div>
+    <div class="member">
+      <div class="avatar">🧠</div>Claude
+    </div>
+    <div class="member">
+      <div class="avatar">🚀</div>Grok
+    </div>
+    <div class="member">
+      <div class="avatar">🔊</div>Alexa
+    </div>
+    <div class="member">
+      <div class="avatar">💻</div>Copilot
+    </div>
+    <div class="member">
+      <div class="avatar">🔎</div>Perplexity
+    </div>
+  </div>
 
-<div class="ai-panel">
-<h3>🤖 Local AI control room</h3>
-<div class="ai-buttons">
-<button id="load-ai">Load Local AI</button>
-<button id="start-chat" disabled>Start group gossip</button>
-<button id="stop-chat" disabled>Pause AI chat</button>
-</div>
-<div id="ai-status">Local AI is not loaded. Load it to activate the members.</div>
-</div>
+  <div class="ai-panel">
+    <h3>🤖 Local AI control room</h3>
 
-<div id="messages">
-<div class="system-message">Loading your messages...</div>
-</div>
+    <div class="ai-buttons">
+      <button id="load-ai">Load Local AI</button>
+      <button id="start-chat" disabled>
+        Start group gossip
+      </button>
+      <button id="stop-chat" disabled>
+        Pause AI chat
+      </button>
+    </div>
 
-<div class="composer">
-<div id="replying" class="replying">
-<button id="cancel-reply" type="button">Cancel ✕</button>
-<strong id="replying-to"></strong>
-<div id="replying-text"></div>
-</div>
+    <div id="ai-status" class="status">
+      AI is waiting. Load the local model to begin.
+    </div>
+  </div>
 
-<div class="composer-row">
-<input id="message-input" type="text" placeholder="Type a message...">
-<button id="send-button">Send</button>
-</div>
+  <div id="messages">
+    <div class="system-message">
+      Your group chat is loading... 💜
+    </div>
+  </div>
 
-<div class="voice-area">
-<button id="record-button">🎙️ Record voice note</button>
-<span id="voice-status">Voice notes are saved locally only.</span>
-</div>
+  <div class="composer">
 
-<audio id="voice-playback" controls style="display:none"></audio>
-<button id="logout-button">Log out</button>
-</div>
+    <div id="replying" class="replying" hidden>
+      <button id="cancel-reply" type="button">
+        Cancel ✕
+      </button>
+      <strong id="replying-to"></strong>
+      <div id="replying-text"></div>
+    </div>
+
+    <div class="composer-row">
+      <input id="message-input"
+        type="text"
+        placeholder="Type a message..."
+        autocomplete="off">
+
+      <button id="send-button">Send</button>
+    </div>
+
+    <div class="voice-area">
+      <button id="record-button">
+        🎙️ Record voice note
+      </button>
+      <span id="voice-status">
+        Voice notes are saved locally only.
+      </span>
+    </div>
+
+    <audio id="voice-playback"
+      controls hidden></audio>
+
+    <button id="logout-button">Log out</button>
+  </div>
+
 </section>
 </div>
 
-<script type="module">
-import {
- initializeApp
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-
-import {
- getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
-
-import {
- getFirestore,collection,addDoc,onSnapshot,query,orderBy,
- serverTimestamp,doc,updateDoc,arrayUnion
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-
-/* KEEP YOUR EXISTING FIREBASE CONFIG */
-const firebaseConfig={
- apiKey:"AIzaSyAUu-IhS1uPSOpJejQWcL-T0MrnqfdXxNA",
- authDomain:"ai-after-dark.firebaseapp.com",
- projectId:"ai-after-dark",
- storageBucket:"ai-after-dark.firebasestorage.app",
- messagingSenderId:"461382607377",
- appId:"1:461382607377:web:904a57174dcbfb047947b0"
-};
-
-const OWNER_UID="7TLhY5JcHuXyvkYalAv7jKVgp0a2";
-
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-
-const $=id=>document.getElementById(id);
-
-const loginScreen=$("login-screen");
-const chatScreen=$("chat-screen");
-const loginError=$("login-error");
-const messagesDiv=$("messages");
-const messageInput=$("message-input");
-
-let unsubscribeMessages=null;
-let replyTarget=null;
-let recorder=null;
-let audioChunks=[];
-let voiceUrl=null;
-
-let engine=null;
-let modelLoading=false;
-let aiPaused=true;
-let aiBusy=false;
-let aiTurns=0;
-let knownMessages=[];
-let initialSnapshot=true;
-let conversationVersion=0;
-
-const MODEL_ID="Qwen2-0.5B-Instruct-q4f16_1-MLC";
-const MAX_AI_TURNS=4;
-
-const personalities=[
- {
-  name:"ChatGPT",
-  emoji:"🤖",
-  style:"Expressive, quick with comebacks, Cape Flats-inspired English and Afrikaans. Funny and cheeky."
- },
- {
-  name:"Gemini",
-  emoji:"✨",
-  style:"Energetic, playful, curious, expressive, mixes English and Afrikaans naturally."
- },
- {
-  name:"Claude",
-  emoji:"🧠",
-  style:"Thoughtful, dry humour, calm, clever and slightly British-influenced."
- },
- {
-  name:"Grok",
-  emoji:"🚀",
-  style:"Blunt, sarcastic, cheeky and unpredictable, but friendly."
- },
- {
-  name:"Alexa",
-  emoji:"🔊",
-  style:"Practical, witty South African English, sometimes Afrikaans."
- },
- {
-  name:"Copilot",
-  emoji:"💻",
-  style:"Confident, playful, clever and conversational."
- },
- {
-  name:"Perplexity",
-  emoji:"🔎",
-  style:"Curious, investigative, asks interesting questions and enjoys a good debate."
- }
-];
-
-$("login-button").addEventListener("click",async()=>{
- const email=$("email").value.trim();
- const password=$("password").value;
- loginError.textContent="";
-
- if(!email||!password){
-  loginError.textContent="Please enter your email and password.";
-  return;
- }
-
- try{
-  await signInWithEmailAndPassword(auth,email,password);
- }catch(e){
-  loginError.textContent="Login failed. Check your details and try again.";
- }
-});
-
-$("logout-button").addEventListener("click",()=>signOut(auth));
-
-onAuthStateChanged(auth,async user=>{
- if(unsubscribeMessages){
-  unsubscribeMessages();
-  unsubscribeMessages=null;
- }
-
- if(!user){
-  loginScreen.style.display="block";
-  chatScreen.style.display="none";
-  return;
- }
-
- if(user.uid!==OWNER_UID){
-  loginError.textContent="This account is not authorised.";
-  await signOut(auth);
-  return;
- }
-
- loginScreen.style.display="none";
- chatScreen.style.display="flex";
- listenForMessages();
-});
-
-function setStatus(text){
- $("ai-status").textContent=text;
-}
-
-function listenForMessages(){
- const q=query(collection(db,"messages"),orderBy("createdAt","asc"));
-
- unsubscribeMessages=onSnapshot(q,snapshot=>{
-  messagesDiv.innerHTML="";
-  knownMessages=[];
-
-  if(snapshot.empty){
-   messagesDiv.innerHTML=
-    '<div class="system-message">Your chat is ready. Send your first message! 💜</div>';
-  }
-
-  snapshot.forEach(d=>{
-   const data=d.data();
-   knownMessages.push({id:d.id,...data});
-   renderMessage(d.id,data);
-  });
-
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
-
-  if(initialSnapshot){
-   initialSnapshot=false;
-   return;
-  }
-
-  snapshot.docChanges().forEach(change=>{
-   if(change.type!=="added")return;
-
-   const data=change.doc.data();
-
-   if(data.ai){
-    continueAIConversation();
-   }else if(data.uid===auth.currentUser?.uid){
-    aiTurns=0;
-    conversationVersion++;
-    scheduleAIReply(2500,conversationVersion);
-   }
-  });
-
- },error=>{
-  messagesDiv.innerHTML=
-   '<div class="system-message">Could not load messages. Check your connection and Firestore rules.</div>';
-  console.error(error);
- });
-}
-
-function make(tag,className,text){
- const el=document.createElement(tag);
- if(className)el.className=className;
- if(text!==undefined)el.textContent=text;
- return el;
-}
-
-function renderMessage(id,data){
- const box=make(
-  "div",
-  "message"+
-  (data.uid===auth.currentUser?.uid?" mine":"")+
-  (data.ai?" ai":"")
- );
-
- const sender=make("div","sender",data.name||"Member");
-
- if(data.replyTo){
-  const quote=make("div","reply-quote");
-  quote.append(
-   make("strong","",`↪ ${data.replyTo.name||"Member"}`),
-   make("span","",data.replyTo.text||"")
-  );
-  box.append(quote);
- }
-
- box.append(sender,make("div","message-text",data.text||""));
-
- const time=make(
-  "div",
-  "time",
-  data.createdAt?.toDate
-   ?data.createdAt.toDate().toLocaleString()
-   :"Just now"
- );
-
- box.append(time);
-
- const actions=make("div","message-actions");
- const replyBtn=make("button","","↩ Reply");
-
- replyBtn.type="button";
- replyBtn.addEventListener("click",()=>setReply(id,data));
- actions.append(replyBtn);
- box.append(actions);
-
- const reactions=make("div","reactions");
-
- ["❤️","😂","🔥","👍"].forEach(emoji=>{
-  const b=make("button","",emoji);
-  b.type="button";
-
-  b.addEventListener("click",async()=>{
-   try{
-    await updateDoc(doc(db,"messages",id),{
-     reactions:arrayUnion({
-      emoji,
-      uid:auth.currentUser.uid
-     })
-    });
-   }catch(e){
-    console.error("Reaction failed",e);
-   }
-  });
-
-  reactions.append(b);
- });
-
- box.append(reactions);
-
- const list=data.reactions||[];
- if(list.length){
-  box.append(make("div","time",list.map(x=>x.emoji).join(" ")));
- }
-
- messagesDiv.append(box);
-}
-
-function setReply(id,data){
- replyTarget={
-  id,
-  name:data.name||"Member",
-  text:data.text||""
- };
-
- $("replying-to").textContent=`Replying to ${replyTarget.name}`;
- $("replying-text").textContent=replyTarget.text.slice(0,180);
- $("replying").style.display="block";
- messageInput.focus();
-}
-
-function clearReply(){
- replyTarget=null;
- $("replying").style.display="none";
- $("replying-to").textContent="";
- $("replying-text").textContent="";
-}
-
-$("cancel-reply").addEventListener("click",clearReply);
-
-async function sendMessage(){
- const text=messageInput.value.trim();
- if(!text||!auth.currentUser)return;
-
- const btn=$("send-button");
- btn.disabled=true;
-
- try{
-  const message={
-   uid:auth.currentUser.uid,
-   name:"👑 You",
-   text,
-   reactions:[],
-   createdAt:serverTimestamp()
-  };
-
-  if(replyTarget){
-   message.replyTo={
-    id:replyTarget.id,
-    name:replyTarget.name,
-    text:replyTarget.text
-   };
-  }
-
-  await addDoc(collection(db,"messages"),message);
-  messageInput.value="";
-  clearReply();
-
- }catch(e){
-  alert("Message could not be sent. Check your connection.");
-  console.error(e);
- }finally{
-  btn.disabled=false;
- }
-}
-
-$("send-button").addEventListener("click",sendMessage);
-
-messageInput.addEventListener("keydown",e=>{
- if(e.key==="Enter")sendMessage();
-});
-
-/* LOCAL AI ENGINE */
-
-$("load-ai").addEventListener("click",loadLocalAI);
-
-async function loadLocalAI(){
- if(engine||modelLoading)return;
-
- modelLoading=true;
- $("load-ai").disabled=true;
- setStatus("Preparing local AI...");
-
- try{
-  if(!navigator.gpu){
-   throw new Error("WebGPU is not available in this browser.");
-  }
-
-  const webllm=await import("https://esm.run/@mlc-ai/web-llm");
-
-  engine=await webllm.CreateMLCEngine(
-   MODEL_ID,
-   {
-    initProgressCallback:progress=>{
-     setStatus(progress.text||"Loading model...");
-    }
-   }
-  );
-
-  setStatus("💜 Local AI is ready! Seven personalities are available.");
-  $("start-chat").disabled=false;
-  $("stop-chat").disabled=false;
-
- }catch(e){
-  engine=null;
-  $("load-ai").disabled=false;
-  setStatus("Could not load the model: "+e.message);
-  console.error(e);
- }finally{
-  modelLoading=false;
- }
-}
-
-function choosePersonality(){
- return personalities[Math.floor(Math.random()*personalities.length)];
-}
-
-function chooseTarget(){
- const available=knownMessages.filter(m=>m.text&&m.id);
- if(!available.length)return null;
-
- const recent=available.slice(-20);
- return recent[Math.floor(Math.random()*recent.length)];
-}
-
-function recentContext(){
- return knownMessages.slice(-12).map(m=>
-  `${m.name||"Member"}: ${m.text||""}`
- ).join("\n");
-}
-
-async function generateReply(personality,target){
- if(!engine)throw new Error("Load the local AI first.");
-
- const systemPrompt=
- `You are ${personality.name}, a fictional member of a lively South African group chat.
- Your personality: ${personality.style}
- Speak naturally, not like a customer-service assistant.
- English and Afrikaans code-switching are welcome.
- Be funny, expressive, spontaneous and conversational.
- You may disagree, tease and joke, but do not bully anyone.
- Keep the reply short, usually one to three sentences.
- Do not invent personal facts or pretend to be an actual human.
- You are a fictional chat personality, not the real ${personality.name} service.`;
-
- const targetText=target
-  ?`You are replying to this exact message from ${target.name||"Member"}: "${target.text}"`
-  :"Start a lively group conversation with a natural opening message.";
-
- const userPrompt=
- `Recent group chat:
- ${recentContext()}
-
- ${targetText}
-
- Write only your chat message.`;
-
- const result=await engine.chat.completions.create({
-  messages:[
-   {role:"system",content:systemPrompt},
-   {role:"user",content:userPrompt}
-  ],
-  temperature:0.85,
-  max_tokens:110
- });
-
- return result.choices?.[0]?.message?.content?.trim()||"Eish, what is happening here? 😂";
-}
-
-async function postAIMessage(personality,target,text){
- if(!auth.currentUser)return;
-
- const message={
-  uid:auth.currentUser.uid,
-  name:personality.emoji+" "+personality.name,
-  text,
-  ai:true,
-  reactions:[],
-  createdAt:serverTimestamp()
- };
-
- if(target){
-  message.replyTo={
-   id:target.id,
-   name:target.name||"Member",
-   text:target.text||""
-  };
- }
-
- await addDoc(collection(db,"messages"),message);
-}
-
-function scheduleAIReply(delay,version){
- if(aiPaused||!engine)return;
-
- setTimeout(()=>{
-  if(version!==conversationVersion||aiPaused)return;
-  runOneAIReply();
- },delay);
-}
-
-async function runOneAIReply(){
- if(aiBusy||aiPaused||!engine||!auth.currentUser)return;
-
- if(aiTurns>=MAX_AI_TURNS){
-  setStatus("The group has paused. Start another conversation whenever you like.");
-  return;
- }
-
- aiBusy=true;
- setStatus("🤖 The group is typing...");
-
- try{
-  const personality=choosePersonality();
-  const target=chooseTarget();
-  const text=await generateReply(personality,target);
-
-  if(aiPaused)return;
-
-  await postAIMessage(personality,target,text);
-  aiTurns++;
-
-  setStatus(`${personality.name} has joined the conversation.`);
-
- }catch(e){
-  setStatus("AI reply failed: "+e.message);
-  console.error(e);
- }finally{
-  aiBusy=false;
- }
-}
-
-function continueAIConversation(){
- if(aiPaused||!engine||aiBusy)return;
-
- if(aiTurns>=MAX_AI_TURNS){
-  setStatus("The group has paused. Start another conversation whenever you like.");
-  return;
- }
-
- if(Math.random()<0.75){
-  scheduleAIReply(5000+Math.random()*5000,conversationVersion);
- }else{
-  setStatus("The group is quiet for now. You can start another conversation.");
- }
-}
-
-$("start-chat").addEventListener("click",async()=>{
- if(!engine){
-  setStatus("Load Local AI first.");
-  return;
- }
-
- if(aiBusy)return;
-
- aiPaused=false;
- aiTurns=0;
- conversationVersion++;
-
- $("start-chat").disabled=true;
- setStatus("💬 Starting a group conversation...");
-
- try{
-  const personality=choosePersonality();
-  const target=chooseTarget();
-  const text=await generateReply(personality,target);
-
-  if(aiPaused)return;
-
-  await postAIMessage(personality,target,text);
-  aiTurns++;
-
-  setStatus(`${personality.name} started the conversation!`);
-
- }catch(e){
-  setStatus("Could not start the conversation: "+e.message);
-  console.error(e);
- }finally{
-  $("start-chat").disabled=false;
- }
-});
-
-$("stop-chat").addEventListener("click",()=>{
- aiPaused=true;
- conversationVersion++;
- $("start-chat").disabled=false;
- setStatus("AI conversation paused. The group can resume whenever you like.");
-});
-
-/* VOICE NOTES */
-
-const recordButton=$("record-button");
-const voiceStatus=$("voice-status");
-const voicePlayback=$("voice-playback");
-
-recordButton.addEventListener("click",async()=>{
- if(recorder&&recorder.state==="recording"){
-  recorder.stop();
-  recordButton.textContent="🎙️ Record voice note";
-  voiceStatus.textContent="Recording finished.";
-  return;
- }
-
- try{
-  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-  audioChunks=[];
-  recorder=new MediaRecorder(stream);
-
-  recorder.ondataavailable=e=>{
-   if(e.data.size)audioChunks.push(e.data);
-  };
-
-  recorder.onstop=()=>{
-   const blob=new Blob(audioChunks,{
-    type:recorder.mimeType||"audio/webm"
-   });
-
-   if(voiceUrl)URL.revokeObjectURL(voiceUrl);
-
-   voiceUrl=URL.createObjectURL(blob);
-   voicePlayback.src=voiceUrl;
-   voicePlayback.style.display="block";
-
-   stream.getTracks().forEach(t=>t.stop());
-  };
-
-  recorder.start();
-  recordButton.textContent="⏹️ Stop recording";
-  voiceStatus.textContent="Recording...";
-
- }catch(e){
-  voiceStatus.textContent="Microphone unavailable or permission not granted.";
- }
-});
-</script>
+<script type="module" src="app.js?v=3"></script>
 </body>
 </html>
