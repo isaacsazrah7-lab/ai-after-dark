@@ -32,17 +32,16 @@ const firebaseConfig = {
 
 const OWNER_UID = "7TLhY5JcHuXyvkYalAv7jKVgp0a2";
 const MODEL_ID = "onnx-community/Qwen2.5-0.5B-Instruct";
-const MAX_AI_TURNS = 4;
+const MAX_AI_TURNS = 8;
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 const messagesRef = collection(db, "messages");
 
-// ELEMENTS
 const $ = id => document.getElementById(id);
 
+// ELEMENTS
 const loginScreen = $("login-screen");
 const chatScreen = $("chat-screen");
 const emailInput = $("email");
@@ -65,7 +64,7 @@ const recordButton = $("record-button");
 const voiceStatus = $("voice-status");
 const voicePlayback = $("voice-playback");
 
-// AI PERSONALITIES
+// PERSONALITIES
 const personalities = [
   {
     name: "ChatGPT",
@@ -128,15 +127,13 @@ function showError(message) {
   if (loginError) loginError.textContent = message;
 }
 
-function escapeText(value) {
-  return String(value ?? "");
-}
-
 function getTime(timestamp) {
   if (!timestamp) return "";
+
   const date = timestamp.toDate
     ? timestamp.toDate()
     : new Date(timestamp);
+
   return date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit"
@@ -175,6 +172,7 @@ logoutButton?.addEventListener("click", async () => {
   aiPaused = true;
   conversationVersion++;
 
+  if (lastScheduled) clearTimeout(lastScheduled);
   if (unsubscribeMessages) unsubscribeMessages();
 
   await signOut(auth);
@@ -200,7 +198,7 @@ onAuthStateChanged(auth, user => {
   listenForMessages();
 });
 
-// LISTEN TO FIREBASE MESSAGES
+// FIREBASE MESSAGES
 function listenForMessages() {
   if (unsubscribeMessages) unsubscribeMessages();
 
@@ -209,21 +207,26 @@ function listenForMessages() {
     orderBy("createdAt", "asc")
   );
 
-  unsubscribeMessages = onSnapshot(messageQuery, snapshot => {
-    knownMessages = snapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
+  unsubscribeMessages = onSnapshot(
+    messageQuery,
+    snapshot => {
+      knownMessages = snapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
 
-    renderMessages();
-  }, error => {
-    setStatus("Chat connection error.");
-  });
+      renderMessages();
+    },
+    error => {
+      console.error(error);
+      setStatus("Chat connection error.");
+    }
+  );
 }
 
 // SEND MESSAGE
 async function sendMessage() {
-  const text = messageInput.value.trim();
+  const text = messageInput?.value.trim();
 
   if (!text || !auth.currentUser) return;
 
@@ -242,7 +245,16 @@ async function sendMessage() {
 
     messageInput.value = "";
     cancelReply();
+
+    // Let the group respond to the new message.
+    aiTurns = 0;
+
+    if (!aiPaused && engine) {
+      scheduleAI(1800);
+    }
+
   } catch (error) {
+    console.error(error);
     setStatus("Could not send message. Please try again.");
   } finally {
     sendButton.disabled = false;
@@ -262,18 +274,26 @@ messageInput?.addEventListener("keydown", event => {
 function chooseReply(message) {
   selectedReply = {
     id: message.id,
-    sender: message.sender || "Unknown",
+    sender: message.sender || message.name || "Unknown",
     text: message.text || ""
   };
 
   if (replyingBox) replyingBox.hidden = false;
-  if (replyingTo) replyingTo.textContent = "Replying to " + selectedReply.sender;
-  if (replyingText) replyingText.textContent = selectedReply.text;
+
+  if (replyingTo) {
+    replyingTo.textContent = "Replying to " + selectedReply.sender;
+  }
+
+  if (replyingText) {
+    replyingText.textContent = selectedReply.text;
+  }
+
   messageInput?.focus();
 }
 
 function cancelReply() {
   selectedReply = null;
+
   if (replyingBox) replyingBox.hidden = true;
 }
 
@@ -281,9 +301,9 @@ cancelReplyButton?.addEventListener("click", cancelReply);
 
 // REACTIONS
 async function reactToMessage(message) {
-  const reactions = {
-    ...(message.reactions || {})
-  };
+  const reactions = Array.isArray(message.reactions)
+    ? {}
+    : { ...(message.reactions || {}) };
 
   reactions.heart = (reactions.heart || 0) + 1;
 
@@ -311,16 +331,18 @@ function renderMessages() {
 
     const sender = document.createElement("div");
     sender.className = "sender";
-    sender.textContent = message.sender || "Unknown";
+    sender.textContent = message.sender || message.name || "Unknown";
 
     bubble.appendChild(sender);
 
     if (message.replyTo) {
       const reply = document.createElement("div");
       reply.className = "reply";
+
       reply.textContent =
         "↪ " + message.replyTo.sender + ": " +
         message.replyTo.text;
+
       bubble.appendChild(reply);
     }
 
@@ -349,7 +371,8 @@ function renderMessages() {
 
     const heartButton = document.createElement("button");
     heartButton.textContent =
-      "❤️ " + (message.reactions?.heart || "");
+      "❤️ " + (message.reactions?.heart || 0);
+
     heartButton.addEventListener("click", () => reactToMessage(message));
 
     actions.append(replyButton, heartButton);
@@ -361,15 +384,15 @@ function renderMessages() {
   messagesBox.scrollTop = messagesBox.scrollHeight;
 }
 
-// LOAD LOCAL AI
+// LOAD LOCAL AI ON CPU
 async function loadLocalAI() {
   if (engine || modelLoading) return;
-
   if (!loadAIButton) return;
 
   modelLoading = true;
   loadAIButton.disabled = true;
-  setStatus("Preparing local AI...");
+
+  setStatus("Preparing local AI on CPU...");
 
   try {
     const transformers = await import(
@@ -380,15 +403,18 @@ async function loadLocalAI() {
       "text-generation",
       MODEL_ID,
       {
+        device: "wasm",
         dtype: "q4"
       }
     );
 
-    setStatus("Local AI is ready!");
+    setStatus("💜 Local AI is ready!");
+
   } catch (error) {
-    console.error(error);
-    setStatus("AI could not load on this device.");
+    console.error("Model loading failed:", error);
+
     engine = null;
+    setStatus("AI could not load. Check the browser console.");
   } finally {
     modelLoading = false;
     loadAIButton.disabled = false;
@@ -397,60 +423,71 @@ async function loadLocalAI() {
 
 loadAIButton?.addEventListener("click", loadLocalAI);
 
-// GENERATE AI REPLY
+// GENERATE REPLY
 async function generateReply(personality, history) {
   if (!engine) return null;
 
   const systemPrompt = `
-You are ${personality.name}, an AI personality in a private fictional group chat called AI AFTER DARK.
+You are ${personality.name}, an AI personality in a fictional group chat called AI AFTER DARK.
 
 Your personality: ${personality.style}
 
-Speak naturally like a real person in a South African group chat.
-You can mix English and Afrikaans naturally.
-Use casual South African expressions when appropriate.
+Speak naturally like a person in a South African group chat.
+Mix English and Afrikaans naturally when appropriate.
+Use casual South African expressions.
 Be funny, spontaneous and conversational.
 You can disagree, tease and joke harmlessly.
 Do not sound like a customer service bot.
-Do not repeat the entire conversation.
-Do not claim to be a real human or a real employee of another AI company.
-Keep your reply short and natural.
+React to what people actually said.
+Do not repeat the whole conversation.
+Keep replies short and natural.
+Write only your own chat message.
 `;
 
-  const conversation = history.slice(-8).map(message => ({
-    role: message.ai ? "assistant" : "user",
-    content: `${message.sender}: ${message.text}`
-  }));
+  const conversation = history.slice(-8).map(message => {
+    const sender = message.sender || message.name || "Someone";
+
+    return `${sender}: ${message.text || ""}`;
+  }).join("\n");
+
+  const prompt = `
+${systemPrompt}
+
+GROUP CHAT:
+${conversation}
+
+${personality.name}, write your next message:
+`;
 
   try {
-    const result = await engine(
-      [
-        { role: "system", content: systemPrompt },
-        ...conversation,
-        {
-          role: "user",
-          content: "Respond naturally to the group chat. Write only your message."
-        }
-      ],
-      {
-        max_new_tokens: 90,
-        do_sample: true,
-        temperature: 0.85,
-        repetition_penalty: 1.12
-      }
-    );
+    const result = await engine(prompt, {
+      max_new_tokens: 100,
+      do_sample: true,
+      temperature: 0.85,
+      repetition_penalty: 1.12,
+      return_full_text: false
+    });
 
     let output = result?.[0]?.generated_text;
 
-    if (Array.isArray(output)) {
+    if (typeof output !== "string" && Array.isArray(output)) {
       output = output[output.length - 1]?.content;
     }
 
     if (typeof output !== "string") return null;
 
-    return output.trim().slice(-600);
+    output = output.trim();
+
+    // Remove accidental speaker labels.
+    output = output.replace(
+      new RegExp("^" + personality.name + "\\s*:\\s*", "i"),
+      ""
+    );
+
+    return output.slice(0, 600) || null;
+
   } catch (error) {
-    console.error("AI generation error", error);
+    console.error("AI generation error:", error);
     return null;
   }
 }
@@ -473,6 +510,16 @@ async function postAIMessage(personality, text, version) {
   });
 }
 
+// SCHEDULE NEXT AI MESSAGE
+function scheduleAI(delay = 4000) {
+  if (lastScheduled) clearTimeout(lastScheduled);
+
+  lastScheduled = setTimeout(() => {
+    lastScheduled = null;
+    continueAIConversation();
+  }, delay);
+}
+
 // GROUP CHAT ENGINE
 async function continueAIConversation() {
   if (
@@ -487,12 +534,6 @@ async function continueAIConversation() {
   const version = conversationVersion;
 
   try {
-    // Sometimes the group stays quiet.
-    if (Math.random() > 0.78) {
-      setStatus("The group is quiet...");
-      return;
-    }
-
     const personality =
       personalities[Math.floor(Math.random() * personalities.length)];
 
@@ -507,25 +548,28 @@ async function continueAIConversation() {
       version === conversationVersion
     ) {
       await postAIMessage(personality, response, version);
+
       aiTurns++;
 
       if (aiTurns < MAX_AI_TURNS) {
-        lastScheduled = setTimeout(() => {
-          aiBusy = false;
-          continueAIConversation();
-        }, 3500 + Math.random() * 6500);
-
-        return;
+        scheduleAI(3500 + Math.random() * 5000);
+      } else {
+        setStatus("The group is taking a little break.");
       }
+    } else if (!response) {
+      setStatus("AI couldn't generate a reply. Try again.");
     }
+
+  } catch (error) {
+    console.error(error);
+    setStatus("Something went wrong. Try again.");
   } finally {
     aiBusy = false;
-    setStatus(aiPaused ? "AI paused" : "AI group chat is active");
   }
 }
 
-// START AND STOP AI CHAT
-startButton?.addEventListener("click", async () => {
+// START CHAT
+startButton?.addEventListener("click", () => {
   if (!engine) {
     setStatus("Load the local AI first.");
     return;
@@ -535,11 +579,14 @@ startButton?.addEventListener("click", async () => {
   aiTurns = 0;
   conversationVersion++;
 
-  setStatus("AI group chat started!");
+  if (lastScheduled) clearTimeout(lastScheduled);
+
+  setStatus("💜 AI group chat started!");
 
   continueAIConversation();
 });
 
+// STOP CHAT
 stopButton?.addEventListener("click", () => {
   aiPaused = true;
   conversationVersion++;
@@ -552,8 +599,10 @@ stopButton?.addEventListener("click", () => {
 // VOICE RECORDING
 recordButton?.addEventListener("click", async () => {
   if (!navigator.mediaDevices?.getUserMedia) {
-    if (voiceStatus) voiceStatus.textContent =
-      "Voice recording is not supported here.";
+    if (voiceStatus) {
+      voiceStatus.textContent =
+        "Voice recording is not supported here.";
+    }
     return;
   }
 
@@ -571,7 +620,9 @@ recordButton?.addEventListener("click", async () => {
     recorder = new MediaRecorder(stream);
 
     recorder.ondataavailable = event => {
-      if (event.data.size) audioChunks.push(event.data);
+      if (event.data.size) {
+        audioChunks.push(event.data);
+      }
     };
 
     recorder.onstop = () => {
@@ -580,6 +631,7 @@ recordButton?.addEventListener("click", async () => {
       });
 
       if (audioUrl) URL.revokeObjectURL(audioUrl);
+
       audioUrl = URL.createObjectURL(audioBlob);
 
       if (voicePlayback) {
@@ -593,17 +645,24 @@ recordButton?.addEventListener("click", async () => {
         voiceStatus.textContent = "Recording ready to play.";
       }
 
-      if (recordButton) recordButton.textContent = "🎙 Record";
+      if (recordButton) {
+        recordButton.textContent = "🎙 Record";
+      }
     };
 
     recorder.start();
 
     if (voiceStatus) voiceStatus.textContent = "Recording...";
-    if (recordButton) recordButton.textContent = "⏹ Stop recording";
+    if (recordButton) {
+      recordButton.textContent = "⏹ Stop recording";
+    }
 
   } catch (error) {
+    console.error(error);
+
     if (voiceStatus) {
-      voiceStatus.textContent = "Microphone permission was not granted.";
+      voiceStatus.textContent =
+        "Microphone permission was not granted.";
     }
   }
 });
