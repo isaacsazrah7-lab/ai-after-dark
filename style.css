@@ -1,4 +1,3 @@
-
 * {
   box-sizing: border-box;
 }
@@ -22,12 +21,19 @@ body {
   font-family: Arial, sans-serif;
 }
 
-button, input, textarea {
+button,
+input {
   font: inherit;
 }
 
 button {
   cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .app {
@@ -37,34 +43,90 @@ button {
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  position: relative;
 }
+
+/* HEADER */
 
 header {
   padding: 18px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
 }
 
 header h1 {
   margin: 0;
-  font-size: 21px;
+  font-size: 22px;
 }
 
 header p {
   margin: 5px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
 }
+
+/* LOGIN */
+
+#login-screen {
+  padding: 35px 20px;
+  text-align: center;
+}
+
+#login-screen h2 {
+  margin-bottom: 8px;
+}
+
+#login-screen p {
+  color: var(--muted);
+}
+
+#login-screen input {
+  display: block;
+  width: 100%;
+  max-width: 350px;
+  padding: 13px;
+  margin: 12px auto;
+  background: #30243d;
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+}
+
+#login-screen input:focus {
+  border-color: var(--purple);
+}
+
+#login-screen button {
+  padding: 12px 25px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--purple);
+  color: white;
+}
+
+#login-error {
+  color: #ff9292 !important;
+}
+
+/* CHAT */
+
+#chat-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* MEMBERS */
 
 .members {
   display: flex;
-  gap: 12px;
-  padding: 14px;
+  gap: 13px;
+  padding: 15px;
   overflow-x: auto;
   border-bottom: 1px solid var(--border);
 }
@@ -76,9 +138,9 @@ header p {
   color: var(--muted);
 }
 
-.member .avatar {
-  width: 42px;
-  height: 42px;
+.avatar {
+  width: 43px;
+  height: 43px;
   margin: 0 auto 6px;
   border-radius: 50%;
   background: #38234f;
@@ -88,20 +150,37 @@ header p {
   border: 2px solid #68438a;
 }
 
+/* GROUP CONTROL PANEL */
+
 .ai-panel {
   margin: 12px;
-  padding: 12px;
+  padding: 15px;
   background: #21172f;
   border: 1px solid var(--border);
   border-radius: 14px;
 }
 
+.ai-panel h3 {
+  margin: 0 0 8px;
+}
+
+.panel-description {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 13px;
+}
+
+.ai-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
 .ai-panel button,
-.composer button,
-header button {
+.composer button {
   border: 0;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 11px 14px;
   background: #68438a;
   color: white;
 }
@@ -111,6 +190,15 @@ header button {
   background: #8556ae;
 }
 
+.status {
+  margin-top: 12px;
+  color: var(--light-purple);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* CHAT MESSAGES */
+
 #messages {
   flex: 1;
   padding: 14px;
@@ -118,11 +206,18 @@ header button {
   min-height: 250px;
 }
 
+.system-message {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 20px 10px;
+}
+
 .message {
   max-width: 85%;
   background: #30243d;
   border-radius: 14px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   margin: 10px 0;
   overflow-wrap: anywhere;
 }
@@ -136,24 +231,30 @@ header button {
   font-size: 12px;
   color: var(--light-purple);
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .mine .sender {
   color: #f4d9ff;
 }
 
+.message-text {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .time {
   font-size: 10px;
   color: var(--muted);
   text-align: right;
-  margin-top: 6px;
+  margin-top: 7px;
 }
 
 .message-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 7px;
+  margin-top: 9px;
   flex-wrap: wrap;
 }
 
@@ -166,27 +267,70 @@ header button {
   font-size: 12px;
 }
 
+.message-actions button:hover {
+  background: #8556ae;
+}
+
+.reaction-list {
+  margin-top: 7px;
+  font-size: 13px;
+}
+
+/* REPLY */
+
 .reply {
   background: #21172f;
   border-left: 3px solid var(--purple);
   padding: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
   border-radius: 6px;
   font-size: 12px;
   color: var(--muted);
+  white-space: pre-wrap;
 }
+
+.replying {
+  padding: 10px;
+  background: #30243d;
+  border-radius: 10px;
+  border-left: 3px solid var(--purple);
+}
+
+.replying strong {
+  display: block;
+  margin: 7px 0;
+  font-size: 12px;
+}
+
+#replying-text {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.replying button {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+/* COMPOSER */
 
 .composer {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 10px;
   padding: 12px;
   background: var(--panel);
   border-top: 1px solid var(--border);
-  align-items: center;
 }
 
-.composer input,
-.composer textarea {
+.composer-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.composer-row input {
   flex: 1;
   min-width: 0;
   background: #30243d;
@@ -197,74 +341,61 @@ header button {
   outline: none;
 }
 
-.composer input:focus,
-.composer textarea:focus {
+.composer-row input:focus {
   border-color: var(--purple);
 }
 
-#login-screen {
-  padding: 30px 20px;
-  text-align: center;
-}
-
-#login-screen input {
-  width: 100%;
-  max-width: 350px;
-  padding: 13px;
-  margin: 8px 0;
-  background: #30243d;
-  color: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-#login-screen button {
-  padding: 12px 24px;
-  border: 0;
-  border-radius: 10px;
+.composer-row button {
   background: var(--purple);
-  color: white;
 }
 
-#chat-screen {
+.voice-area {
   display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
 }
 
-[hidden] {
-  display: none !important;
+.voice-area span {
+  color: var(--muted);
+  font-size: 11px;
 }
 
-.status {
-  color: var(--light-purple);
+#voice-playback {
+  width: 100%;
+}
+
+.logout-button {
+  align-self: flex-end;
+  background: #49335f !important;
   font-size: 12px;
 }
 
-@media (max-width: 480px) {
-  .app {
-    width: 100%;
-  }
+/* MOBILE */
 
+@media (max-width: 480px) {
   header {
-    padding: 14px;
+    padding: 15px;
   }
 
   header h1 {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .message {
-    max-width: 90%;
+    max-width: 92%;
+  }
+
+  .ai-panel {
+    margin: 9px;
+    padding: 12px;
   }
 
   .composer {
-    gap: 6px;
-    padding: 9px;
-  }
-
-  .composer button {
     padding: 10px;
   }
-    }
+
+  .composer-row button {
+    padding: 10px 13px;
+  }
+}
